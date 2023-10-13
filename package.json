@@ -17,8 +17,12 @@
   "dependencies": {
     "@solidjs/meta": "^0.28.6",
     "@solidjs/router": "^0.8.3",
+    "@types/plotly.js-basic-dist": "^1.54.2",
+    "plotly.js-basic-dist": "^2.26.2",
+    "solid-icons": "^1.0.12",
     "solid-js": "^1.7.12",
-    "solid-start": "^0.3.6"
+    "solid-start": "^0.3.6",
+    "tailwind-merge": "^1.14.0"
   },
   "engines": {
     "node": "18"

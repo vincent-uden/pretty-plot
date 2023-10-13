@@ -9,6 +9,7 @@ module.exports = {
         primary: "var(--primary)",
         secondary: "var(--secondary)",
         accent: "var(--accent)",
+        "accent-active": "var(--accent-active)",
       },
       fontSize: {
         sm: "0.750rem",
@@ -20,7 +21,7 @@ module.exports = {
         "5xl": "4.210rem",
       },
       fontFamily: {
-        heading: "Noto Serif",
+        heading: "Noto Sans",
         body: "Roboto",
       },
     },

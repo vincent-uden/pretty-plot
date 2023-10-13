@@ -10,6 +10,7 @@
     --primary: #294794;
     --secondary: #c3cfef;
     --accent: #35a2c0;
+    --accent-active: #35b1d4;
   }
   .dark {
     --text: #fef9ec;
