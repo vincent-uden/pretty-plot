@@ -1,24 +1,39 @@
-import { createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, Show } from "solid-js";
 import { TbFileExport } from "solid-icons/tb";
 
 import ConfirmButton from "~/components/ConfirmButton";
-import { isServer, NoHydration } from "solid-js/web";
+import { NoHydration } from "solid-js/web";
 import TextInput from "~/components/TextInput";
 import SelectInput from "~/components/SelectInput";
-import { Data, PlotType } from "plotly.js-basic-dist";
 import PlotSettings from "~/components/PlotSettings";
 import { unstable_clientOnly } from "solid-start";
 
 import Papa from "papaparse";
+import { createStore, produce } from "solid-js/store";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
 type OutputFormat = "PDF" | "PNG";
 
+const standardColors = [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd",
+  "#8c564b",
+  "#e377c2",
+  "#7f7f7f",
+  "#bcbd22",
+  "#17becf",
+];
+
 export type PlotColumn = {
   name: string;
   data: number[];
 };
+
+export type UserPlotType = "bar" | "scatter" | "line" | "pie";
 
 export type UserPlot = {
   name: string;
@@ -26,15 +41,26 @@ export type UserPlot = {
   xKey: string;
   yKey: string;
   columns: PlotColumn[];
-  type: PlotType;
+  type: UserPlotType;
+  id: number;
 };
+
 
 function userToPlotly(plot: UserPlot): Data {
   let trace = {
     x: [],
     y: [],
     type: plot.type,
+    mode: "",
+    color: plot.color,
   };
+  if (plot.type == "line") {
+    trace.type = "scatter";
+    trace.mode = "lines";
+  } else if (plot.type == "scatter") {
+    trace.type = "scatter";
+    trace.mode = "markers";
+  }
 
   let xCol: PlotColumn | undefined = undefined;
   for (const col of plot.columns) {
@@ -65,17 +91,19 @@ function userToPlotly(plot: UserPlot): Data {
     trace.y = yCol.data as never[];
   }
 
+  // @ts-ignore
   return trace;
 }
 
-function csvToPlot(csvStr: string, name: string): UserPlot {
+function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
   let output: UserPlot = {
     name,
-    color: "#aa0000",
+    color: standardColors[index % standardColors.length],
     xKey: "",
     yKey: "",
     columns: [],
     type: "scatter",
+    id: (new Date()).getMilliseconds(),
   };
 
   const csv = Papa.parse(csvStr, {
@@ -102,16 +130,21 @@ function csvToPlot(csvStr: string, name: string): UserPlot {
   return output;
 }
 
-const testPlots: UserPlot[] = [];
 
 export default function Home() {
-  const [plots, setPlots] = createSignal<UserPlot[]>(testPlots);
+  const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [dataInput, setDataInput] = createSignal("");
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("PDF");
 
-  const plotlyPlots = () => plots().map(userToPlotly);
+  function updatePlot(p: UserPlot, field: keyof UserPlot) {
+    setPlots(
+      x => x.id == p.id,
+      // @ts-ignore
+      produce((plot) => (plot[field] = p[field])),
+    );
+  }
 
   return (
     <main class="mx-auto text-gray-700 p-4">
@@ -132,7 +165,7 @@ export default function Home() {
           </textarea>
           <div class="h-4" />
           <ConfirmButton onClick={() => {
-            setPlots((x) => [...x, csvToPlot(dataInput(), "New Plot")]);
+            setPlots((x) => [...x, csvToPlot(dataInput(), "New Plot", x.length)]);
           }} >Add Plot</ConfirmButton>
           <div class="h-8" />
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
@@ -147,7 +180,7 @@ export default function Home() {
             </label>
             <TextInput
               id="exportName"
-              class="font-mono"
+              class="font-mono text-primary"
               value="plot"
               out={setOutputName}
             />
@@ -157,7 +190,7 @@ export default function Home() {
             </label>
             <SelectInput
               id="exportName"
-              class="font-mono"
+              class="font-mono text-primary"
               out={setOutputFormat}
               options={["PDF", "PNG"] as OutputFormat[]}
             />
@@ -166,14 +199,14 @@ export default function Home() {
           <ConfirmButton>Download</ConfirmButton>
         </aside>
         <div class="grow">
-          <div class="bg-white rounded-xl shadow-lg p-4">
-            <Plot data={plotlyPlots()} fallback={<p></p>} />
+          <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col items-center">
+            <Plot data={plots.map(userToPlotly)} fallback={<p></p>} width={400} height={300} layout={{autosize: false}} />
           </div>
         </div>
         <aside class="basis-64">
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
           <div class="flex flex-col gap-4 h-[70vh] overflow-y-scroll py-4">
-            <For each={plots()}>{(p) => <PlotSettings plot={p} />}</For>
+            <For each={plots}>{(p, i) => <PlotSettings plot={p} updatePlot={updatePlot} index={i()} />}</For>
           </div>
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
         </aside>

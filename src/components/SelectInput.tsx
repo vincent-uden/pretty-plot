@@ -3,9 +3,11 @@ import { twMerge } from "tailwind-merge";
 
 type SelectProps<T> = {
   id?: string;
+  value?: string;
   class?: string;
   options?: T[];
   out?: Setter<T>;
+  onChange?: (x: T) => void;
 };
 
 export default function TextInput<T>(props: SelectProps<T>) {
@@ -16,9 +18,13 @@ export default function TextInput<T>(props: SelectProps<T>) {
         props.class,
       )}
       id={props.id ?? ""}
+      value={(props.value ?? props.options?.at(0) + "") ?? ""}
       onChange={(e) => {
         if (props.out) {
-          props.out(e.target.value as any)
+          props.out(e.target.value as any);
+        }
+        if (props.onChange) {
+          props.onChange(e.target.value as any);
         }
       }}
     >
