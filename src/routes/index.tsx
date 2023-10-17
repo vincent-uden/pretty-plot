@@ -1,12 +1,17 @@
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { TbFileExport } from "solid-icons/tb";
 
 import ConfirmButton from "~/components/ConfirmButton";
-import { NoHydration } from "solid-js/web";
+import { isServer, NoHydration } from "solid-js/web";
 import TextInput from "~/components/TextInput";
 import SelectInput from "~/components/SelectInput";
 import { Data, PlotType } from "plotly.js-basic-dist";
 import PlotSettings from "~/components/PlotSettings";
+import { unstable_clientOnly } from "solid-start";
+
+import Papa from "papaparse";
+
+const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
 type OutputFormat = "PDF" | "PNG";
 
@@ -63,16 +68,41 @@ function userToPlotly(plot: UserPlot): Data {
   return trace;
 }
 
-const testPlots: UserPlot[] = [
-  {
-    name: "First Plot",
-    color: "#ff0000",
-    xKey: "x",
-    yKey: "y",
+function csvToPlot(csvStr: string, name: string): UserPlot {
+  let output: UserPlot = {
+    name,
+    color: "#aa0000",
+    xKey: "",
+    yKey: "",
     columns: [],
     type: "scatter",
-  },
-];
+  };
+
+  const csv = Papa.parse(csvStr, {
+    header: true,
+  });
+
+  for (const header of csv.meta.fields) {
+    let col: PlotColumn = {
+      name: header,
+      data: [],
+    };
+
+    for (const row of csv.data) {
+      col.data.push(row[header]);
+    }
+
+    output.columns.push(col);
+  }
+
+  if (output.columns.length > 0) {
+    output.yKey = output.columns[0].name;
+  }
+
+  return output;
+}
+
+const testPlots: UserPlot[] = [];
 
 export default function Home() {
   const [plots, setPlots] = createSignal<UserPlot[]>(testPlots);
@@ -80,6 +110,8 @@ export default function Home() {
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("PDF");
+
+  const plotlyPlots = () => plots().map(userToPlotly);
 
   return (
     <main class="mx-auto text-gray-700 p-4">
@@ -89,7 +121,7 @@ export default function Home() {
         </span>
         <span class="text-accent opacity-50">.vincentuden.xyz</span>
       </h1>
-      <div class="flex flex-row">
+      <div class="flex flex-row gap-8">
         <aside class="flex flex-col grow-0 basis-64">
           <textarea
             class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none"
@@ -99,7 +131,9 @@ export default function Home() {
             {""}
           </textarea>
           <div class="h-4" />
-          <ConfirmButton>Add Plot</ConfirmButton>
+          <ConfirmButton onClick={() => {
+            setPlots((x) => [...x, csvToPlot(dataInput(), "New Plot")]);
+          }} >Add Plot</ConfirmButton>
           <div class="h-8" />
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
             <div class="flex flex-row gap-4 mb-4">
@@ -131,13 +165,17 @@ export default function Home() {
           <div class="h-4" />
           <ConfirmButton>Download</ConfirmButton>
         </aside>
-        <div class="grow"></div>
+        <div class="grow">
+          <div class="bg-white rounded-xl shadow-lg p-4">
+            <Plot data={plotlyPlots()} fallback={<p></p>} />
+          </div>
+        </div>
         <aside class="basis-64">
-          <div></div>
-          <div>
+          <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
+          <div class="flex flex-col gap-4 h-[70vh] overflow-y-scroll py-4">
             <For each={plots()}>{(p) => <PlotSettings plot={p} />}</For>
           </div>
-          <div></div>
+          <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
         </aside>
       </div>
     </main>

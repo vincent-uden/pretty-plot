@@ -35,11 +35,11 @@ export default function PlotSettings({plot}: PlotSettingsProps) {
     <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
     <div class="flex flex-row gap-4 items-center">
       <NoHydration>
-        <HeaderIcon size={24} />
+        <HeaderIcon size={24} color={plot.color}/>
       </NoHydration>
-      <h2 class="grow text-xl">{plot.name}</h2>
+      <h2 class="grow text-xl" style={{color: plot.color}}>{plot.name}</h2>
       <NoHydration>
-        <FaSolidChevronDown size={24} />
+        <FaSolidChevronDown size={24} color={plot.color} />
       </NoHydration>
     </div>
     </div>
