@@ -23,6 +23,7 @@
     "solid-icons": "^1.0.12",
     "solid-js": "^1.7.12",
     "solid-start": "^0.3.6",
+    "solid-start-vercel": "^0.3.6",
     "tailwind-merge": "^1.14.0"
   },
   "engines": {
