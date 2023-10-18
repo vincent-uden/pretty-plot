@@ -21,7 +21,7 @@ interface PlotProps {
     plot_bgcolor?: string;
     font?: {
       color?: string;
-    }
+    };
   };
 }
 
@@ -38,7 +38,7 @@ let defaultLayout = {
   plot_bgcolor: "rgba(0, 0, 0, 0)",
   font: {
     color: "black",
-  }
+  },
 };
 
 export default function Plot(props: PlotProps) {

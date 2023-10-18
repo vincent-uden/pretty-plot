@@ -1,5 +1,6 @@
 import { createEffect, createSignal, For, Show } from "solid-js";
 import { TbFileExport } from "solid-icons/tb";
+import { IoAddCircle, IoRemoveCircle } from "solid-icons/io";
 
 import ConfirmButton from "~/components/ConfirmButton";
 import { NoHydration } from "solid-js/web";
@@ -28,6 +29,19 @@ const standardColors = [
   "#17becf",
 ];
 
+export const subplotColors = [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd",
+  "#8c564b",
+  "#e377c2",
+  "#7f7f7f",
+  "#bcbd22",
+  "#17becf",
+];
+
 export type PlotColumn = {
   name: string;
   data: number[];
@@ -43,8 +57,8 @@ export type UserPlot = {
   columns: PlotColumn[];
   type: UserPlotType;
   id: number;
+  subplot: number | null;
 };
-
 
 function userToPlotly(plot: UserPlot): Data {
   let trace = {
@@ -53,6 +67,8 @@ function userToPlotly(plot: UserPlot): Data {
     type: plot.type,
     mode: "",
     color: plot.color,
+    xaxis: "x",
+    yaxis: "y",
   };
   if (plot.type == "line") {
     trace.type = "scatter";
@@ -91,6 +107,11 @@ function userToPlotly(plot: UserPlot): Data {
     trace.y = yCol.data as never[];
   }
 
+  if (plot.subplot && plot.subplot > 0) {
+    trace.xaxis += plot.subplot;
+    trace.yaxis += plot.subplot;
+  }
+
   // @ts-ignore
   return trace;
 }
@@ -103,7 +124,8 @@ function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
     yKey: "",
     columns: [],
     type: "scatter",
-    id: (new Date()).getMilliseconds(),
+    id: new Date().getMilliseconds(),
+    subplot: null,
   };
 
   const csv = Papa.parse(csvStr, {
@@ -130,7 +152,6 @@ function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
   return output;
 }
 
-
 export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [dataInput, setDataInput] = createSignal("");
@@ -138,12 +159,40 @@ export default function Home() {
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("PDF");
 
+  const [subplots, setSubplots] = createSignal<number[]>([]);
+  const [paintingSubplot, setPaintingSubplot] = createSignal<number | null>(
+    null,
+  );
+
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
-      x => x.id == p.id,
+      (x) => x.id == p.id,
       // @ts-ignore
       produce((plot) => (plot[field] = p[field])),
     );
+  }
+
+  function generateLayout() {
+    let output: any = {
+      autosize: false,
+    };
+
+    const spacing = 1.0 / subplots().length;
+
+    for (const sp of subplots()) {
+      output["xaxis" + sp] = {
+        domain: [(sp - 1) * spacing, sp * spacing],
+        anchor: "y" + sp,
+      };
+      output["yaxis" + sp] = {
+        domain: [0, 1.0],
+        anchor: "x" + sp,
+      };
+    }
+
+    console.log(output);
+
+    return output;
   }
 
   return (
@@ -164,9 +213,16 @@ export default function Home() {
             {""}
           </textarea>
           <div class="h-4" />
-          <ConfirmButton onClick={() => {
-            setPlots((x) => [...x, csvToPlot(dataInput(), "New Plot", x.length)]);
-          }} >Add Plot</ConfirmButton>
+          <ConfirmButton
+            onClick={() => {
+              setPlots((x) => [
+                ...x,
+                csvToPlot(dataInput(), "New Plot", x.length),
+              ]);
+            }}
+          >
+            Add Plot
+          </ConfirmButton>
           <div class="h-8" />
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
             <div class="flex flex-row gap-4 mb-4">
@@ -200,13 +256,108 @@ export default function Home() {
         </aside>
         <div class="grow">
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col items-center">
-            <Plot data={plots.map(userToPlotly)} fallback={<p></p>} width={400} height={300} layout={{autosize: false}} />
+            <Plot
+              data={plots.map(userToPlotly)}
+              fallback={<p></p>}
+              width={400}
+              height={300}
+              layout={generateLayout()}
+            />
           </div>
         </div>
         <aside class="basis-64">
+          <div class="bg-white rounded-xl p-4 shadow-lg">
+            <p class="mb-2 text-primary text-xl">Subplots</p>
+            <div class="flex flex-row flex-wrap gap-2">
+              <For each={subplots()}>
+                {(sp) => (
+                  <div
+                    class={`rounded-full  w-8 h-8 hover:opacity-50 transition-opacity cursor-pointer ${
+                      paintingSubplot() == sp
+                        ? "border-2 border-green-500 opacity-50"
+                        : "opacity-20"
+                    }`}
+                    style={{ "background-color": standardColors[sp] }}
+                    onClick={() => {
+                      if (paintingSubplot() == sp) {
+                        setPaintingSubplot(null);
+                      } else {
+                        setPaintingSubplot(sp);
+                      }
+                    }}
+                  />
+                )}
+              </For>
+              <div
+                class={`w-8 h-8 ${
+                  paintingSubplot() != null ? "rotate-[45deg]" : ""
+                } transition-transform`}
+                onClick={() => {
+                  if (paintingSubplot() == null) {
+                    setSubplots((x) => [...x, x.length + 1]);
+                  } else {
+                    setPaintingSubplot(null);
+                  }
+                }}
+              >
+                <NoHydration>
+                  <IoAddCircle
+                    class="text-primary cursor-pointer opacity-50 hover:opacity-100 transition-opacity w-8 h-8 scale-[1.2]"
+                    size={48}
+                  />
+                </NoHydration>
+              </div>
+              <Show when={subplots().length > 0}>
+                <div
+                  class="w-8 h-8"
+                  onClick={() => {
+                    const len = subplots().length;
+                    setSubplots((x) => x.slice(0, x.length - 1));
+                    setPlots(
+                      (x) => (x.subplot != null && x.subplot >= len) ?? false,
+                      produce((x) => {
+                        if (len == 1) {
+                          x.subplot = null;
+                        } else {
+                          x.subplot = len - 1;
+                        }
+                        return x;
+                      }),
+                    );
+                    setPaintingSubplot(null);
+                  }}
+                >
+                  <NoHydration>
+                    <IoRemoveCircle
+                      class="text-red-400 cursor-pointer opacity-50 hover:opacity-100 transition-opacity w-8 h-8 scale-[1.2]"
+                      size={48}
+                    />
+                  </NoHydration>
+                </div>
+              </Show>
+            </div>
+          </div>
+          <div class="h-4" />
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
           <div class="flex flex-col gap-4 h-[70vh] overflow-y-scroll py-4">
-            <For each={plots}>{(p, i) => <PlotSettings plot={p} updatePlot={updatePlot} index={i()} />}</For>
+            <For each={plots}>
+              {(p, i) => (
+                <PlotSettings
+                  plot={p}
+                  updatePlot={updatePlot}
+                  index={i()}
+                  headerClickable={() => paintingSubplot() == null}
+                  onClick={() => {
+                    if (paintingSubplot() != null) {
+                      updatePlot(
+                        { ...p, subplot: paintingSubplot() },
+                        "subplot",
+                      );
+                    }
+                  }}
+                />
+              )}
+            </For>
           </div>
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
         </aside>

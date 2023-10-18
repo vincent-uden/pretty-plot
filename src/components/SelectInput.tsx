@@ -18,7 +18,7 @@ export default function TextInput<T>(props: SelectProps<T>) {
         props.class,
       )}
       id={props.id ?? ""}
-      value={(props.value ?? props.options?.at(0) + "") ?? ""}
+      value={props.value ?? props.options?.at(0) + "" ?? ""}
       onChange={(e) => {
         if (props.out) {
           props.out(e.target.value as any);
@@ -28,13 +28,7 @@ export default function TextInput<T>(props: SelectProps<T>) {
         }
       }}
     >
-    <For each={props.options}>
-    {(opt) => (
-      <option>
-        {"" + opt}
-      </option>
-    )}
-    </For>
+      <For each={props.options}>{(opt) => <option>{"" + opt}</option>}</For>
     </select>
   );
 }
