@@ -11,6 +11,7 @@ import { unstable_clientOnly } from "solid-start";
 
 import Papa from "papaparse";
 import { createStore, produce } from "solid-js/store";
+import { DraggableList } from "~/components/DraggableList";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
@@ -60,8 +61,8 @@ export type UserPlot = {
   subplot: number | null;
 };
 
-function userToPlotly(plot: UserPlot): Data {
-  let trace = {
+function userToPlotly(plot: UserPlot) {
+  let trace: any = {
     x: [],
     y: [],
     type: plot.type,
@@ -73,9 +74,17 @@ function userToPlotly(plot: UserPlot): Data {
   if (plot.type == "line") {
     trace.type = "scatter";
     trace.mode = "lines";
+    trace.line = {
+      color: plot.color,
+    };
   } else if (plot.type == "scatter") {
     trace.type = "scatter";
     trace.mode = "markers";
+  }
+  if (plot.type != "line") {
+    trace.marker = {
+      color: plot.color,
+    };
   }
 
   let xCol: PlotColumn | undefined = undefined;
@@ -164,6 +173,8 @@ export default function Home() {
     null,
   );
 
+  const [dragging, setDragging] = createSignal<boolean>(false);
+
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
       (x) => x.id == p.id,
@@ -189,8 +200,6 @@ export default function Home() {
         anchor: "x" + sp,
       };
     }
-
-    console.log(output);
 
     return output;
   }
@@ -340,26 +349,39 @@ export default function Home() {
           <div class="h-4" />
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
           <div class="flex flex-col gap-4 h-[70vh] overflow-y-scroll py-4">
-            <For each={plots}>
-              {(p, i) => (
-                <PlotSettings
-                  plot={p}
-                  updatePlot={updatePlot}
-                  index={i()}
-                  headerClickable={() => paintingSubplot() == null}
-                  onClick={() => {
-                    if (paintingSubplot() != null) {
-                      updatePlot(
-                        { ...p, subplot: paintingSubplot() },
-                        "subplot",
-                      );
-                    }
-                  }}
-                />
+            <DraggableList
+              items={() => plots}
+              itemsSetter={setPlots}
+              dragDelay={200}
+              onDrag={() => {
+                setDragging(true);
+              }}
+              onDrop={() => {
+                setDragging(false);
+              }}
+              renderItem={({ item: plot, index: i }) => (
+                <>
+                  <PlotSettings
+                    plot={plot}
+                    updatePlot={updatePlot}
+                    index={i}
+                    headerClickable={() => paintingSubplot() == null}
+                    forceClose={dragging}
+                    onClick={() => {
+                      if (paintingSubplot() != null) {
+                        updatePlot(
+                          { ...plot, subplot: paintingSubplot() },
+                          "subplot",
+                        );
+                      }
+                    }}
+                  />
+                  <div class="h-4"></div>
+                </>
               )}
-            </For>
+            />
           </div>
-          <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
+          <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg" />
         </aside>
       </div>
     </main>

@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { Accessor, createSignal, Show } from "solid-js";
 import { subplotColors, UserPlot, UserPlotType } from "~/routes";
 
 import {
@@ -19,6 +19,7 @@ type PlotSettingsProps = {
   updatePlot?: (p: UserPlot, i: keyof UserPlot) => void;
   onClick?: () => void;
   headerClickable: () => boolean;
+  forceClose?: Accessor<boolean>;
 };
 
 function GraphIcon(type: UserPlotType): IconTypes {
@@ -44,6 +45,7 @@ export default function PlotSettings({
   updatePlot: update,
   onClick,
   headerClickable,
+  forceClose,
 }: PlotSettingsProps) {
   const updatePlot = update ? update : (p: UserPlot, i: keyof UserPlot) => {};
   const HeaderIcon = () => GraphIcon(plot.type);
@@ -75,7 +77,7 @@ export default function PlotSettings({
             <FaSolidChevronDown size={24} color={plot.color} />
           </NoHydration>
         </div>
-        <Show when={open()}>
+        <Show when={open() && (!forceClose())}>
           <div class="grid grid-cols-2 gap-x-4">
             <div class="col-span-2 h-4" />
             <label class="mb-1 font-semibold" for="exportName">

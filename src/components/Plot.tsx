@@ -56,6 +56,7 @@ export default function Plot(props: PlotProps) {
   });
 
   createEffect(() => {
+    console.log(props.data);
     layout = { ...defaultLayout, ...props.layout };
     Plotly.newPlot(plotId, props.data, layout, {
       responsive: true,
