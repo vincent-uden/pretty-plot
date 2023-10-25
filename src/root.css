@@ -19,3 +19,7 @@
     --accent: #3facca;
   }
 }
+
+.modebar-container {
+    visibility: hidden;
+}

@@ -17,7 +17,7 @@ import { DraggableList } from "~/components/DraggableList";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
-type OutputFormat = "PDF" | "PNG";
+type OutputFormat = "SVG" | "PNG";
 
 const standardColors = [
   "#1f77b4",
@@ -203,7 +203,7 @@ export default function Home() {
   });
 
   const [outputName, setOutputName] = createSignal<string>("plot");
-  const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("PDF");
+  const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("SVG");
 
   const [subplots, setSubplots] = createSignal<number[]>([]);
   const [paintingSubplot, setPaintingSubplot] = createSignal<number | null>(
@@ -211,6 +211,11 @@ export default function Home() {
   );
 
   const [dragging, setDragging] = createSignal<boolean>(false);
+
+  createEffect(() => {
+    console.log(outputFormat());
+    console.log(outputName());
+  });
 
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
@@ -319,11 +324,19 @@ export default function Home() {
               id="exportFormat"
               class="font-mono text-primary"
               out={setOutputFormat}
-              options={["PDF", "PNG"] as OutputFormat[]}
+              options={["SVG", "PNG"] as OutputFormat[]}
             />
           </div>
           <div class="h-4" />
-          <ConfirmButton>Download</ConfirmButton>
+          <ConfirmButton onClick={() => {
+            let allBtns = document.getElementsByClassName("modebar-btn");
+            for (const btn of allBtns) {
+              if (btn.getAttribute("data-title")?.startsWith("SVG_EXPORT")) {
+                // @ts-ignore
+                btn.click();
+              }
+            }
+          }}>Download</ConfirmButton>
         </aside>
         <div class="grow">
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col items-center">
@@ -333,6 +346,8 @@ export default function Home() {
               width={dimToPixels(plotOptions().width, plotOptions().dimUnit)}
               height={dimToPixels(plotOptions().height, plotOptions().dimUnit)}
               layout={generateLayout()}
+              exportName={outputName()}
+              exportFormat={outputFormat().toLowerCase() as any}
             />
           </div>
           <div class="h-4" />

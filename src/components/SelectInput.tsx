@@ -1,4 +1,4 @@
-import { createSignal, For, Setter, Show } from "solid-js";
+import { createEffect, createSignal, For, Setter, Show } from "solid-js";
 import { twMerge } from "tailwind-merge";
 
 type SelectProps<T> = {
@@ -15,6 +15,13 @@ export default function TextInput<T>(props: SelectProps<T>) {
     props.value ?? props?.options?.at(0) ?? "",
   );
   const [selecting, setSelecting] = createSignal(false);
+
+  createEffect(() => {
+    if (props.out) {
+      // @ts-ignore
+      props.out(selectedOption());
+    }
+  });
 
   return (
     <div

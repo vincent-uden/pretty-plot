@@ -2,7 +2,7 @@ import * as Plotly from "plotly.js-basic-dist";
 
 import { createEffect, onMount } from "solid-js";
 
-interface PlotProps {
+export interface PlotProps {
   width?: number;
   height?: number;
 
@@ -23,9 +23,12 @@ interface PlotProps {
       color?: string;
     };
   };
+
+  exportFormat?: "svg" | "png";
+  exportName?: string;
 }
 
-let defaultLayout = {
+export let defaultLayout = {
   autosize: true,
   margin: {
     l: 50,
@@ -50,7 +53,20 @@ export default function Plot(props: PlotProps) {
     Plotly.newPlot(plotId, props.data, layout(), {
       responsive: false,
       displaylogo: false,
-      displayModeBar: false,
+      displayModeBar: true,
+      modeBarButtonsToAdd: [{
+        title: "SVG_EXPORT",
+        name: 'SVG_EXPORT',
+        icon: Plotly.Icons.camera,
+        click: function(gd) {
+          Plotly.downloadImage(gd, {
+            width: props.width ?? 400,
+            height: props.height ?? 400,
+            filename: props.exportName ?? "plot",
+            format: props.exportFormat ?? "svg",
+          })
+        }
+      }]
     });
   });
 
@@ -58,7 +74,20 @@ export default function Plot(props: PlotProps) {
     Plotly.newPlot(plotId, props.data, layout(), {
       responsive: false,
       displaylogo: false,
-      displayModeBar: false,
+      displayModeBar: true,
+      modeBarButtonsToAdd: [{
+        title: "SVG_EXPORT",
+        name: 'SVG_EXPORT',
+        icon: Plotly.Icons.camera,
+        click: function(gd) {
+          Plotly.downloadImage(gd, {
+            width: props.width ?? 400,
+            height: props.height ?? 400,
+            filename: props.exportName ?? "plot",
+            format: props.exportFormat ?? "svg",
+          })
+        }
+      }]
     });
   });
 
