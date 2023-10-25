@@ -1,6 +1,8 @@
 import { createEffect, createSignal, For, Show } from "solid-js";
 import { TbFileExport } from "solid-icons/tb";
 import { IoAddCircle, IoRemoveCircle } from "solid-icons/io";
+import { ImCross } from "solid-icons/im";
+import { FaSolidArrowRightLong } from "solid-icons/fa";
 
 import ConfirmButton from "~/components/ConfirmButton";
 import { NoHydration } from "solid-js/web";
@@ -59,6 +61,19 @@ export type UserPlot = {
   type: UserPlotType;
   id: number;
   subplot: number | null;
+};
+
+export type UserPlotOptions = {
+  title: string;
+  gridX: boolean;
+  gridY: boolean;
+  width: number;
+  height: number;
+  dimUnit: "Inches" | "Pixels" | "Centimeters";
+  xLim: Array<number|null> | null;
+  yLim: Array<number|null> | null;
+  xLabel: string;
+  yLabel: string;
 };
 
 function userToPlotly(plot: UserPlot) {
@@ -161,9 +176,31 @@ function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
   return output;
 }
 
+function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
+  if (unit == "Inches") {
+    return x * 100;
+  }
+  if (unit == "Centimeters") {
+    return x / 2.54 * 100;
+  }
+  return x;
+}
+
 export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [dataInput, setDataInput] = createSignal("");
+  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({
+    title: "",
+    gridX: true,
+    gridY: true,
+    width: 6,
+    height: 4,
+    dimUnit: "Inches",
+    xLim: null,
+    yLim: null,
+    xLabel: "",
+    yLabel: "",
+  });
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("PDF");
@@ -186,7 +223,32 @@ export default function Home() {
   function generateLayout() {
     let output: any = {
       autosize: false,
+      title: {
+        text: plotOptions().title,
+      },
     };
+
+    if (subplots().length == 0) {
+      output["xaxis"] = {
+        title: {
+          text: plotOptions().xLabel,
+        },
+        showgrid: plotOptions().gridX,
+      };
+      output["yaxis"] = {
+        title: {
+          text: plotOptions().yLabel,
+        },
+        showgrid: plotOptions().gridY,
+      };
+
+      if (plotOptions().xLim != null) {
+        output["xaxis"]["range"] = plotOptions().xLim;
+      }
+      if (plotOptions().yLim != null) {
+        output["yaxis"]["range"] = plotOptions().yLim;
+      }
+    }
 
     const spacing = 1.0 / subplots().length;
 
@@ -245,16 +307,16 @@ export default function Home() {
             </label>
             <TextInput
               id="exportName"
-              class="font-mono text-primary"
+              class="font-mono text-primary w-full"
               value="plot"
               out={setOutputName}
             />
             <div class="h-2" />
-            <label class="mb-1 font-semibold" for="exportName">
+            <label class="mb-1 font-semibold" for="exportFormat">
               Format
             </label>
             <SelectInput
-              id="exportName"
+              id="exportFormat"
               class="font-mono text-primary"
               out={setOutputFormat}
               options={["PDF", "PNG"] as OutputFormat[]}
@@ -268,9 +330,184 @@ export default function Home() {
             <Plot
               data={plots.map(userToPlotly)}
               fallback={<p></p>}
-              width={400}
-              height={300}
+              width={dimToPixels(plotOptions().width, plotOptions().dimUnit)}
+              height={dimToPixels(plotOptions().height, plotOptions().dimUnit)}
               layout={generateLayout()}
+            />
+          </div>
+          <div class="h-4" />
+          <div class="bg-white rounded-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2">
+            <label class="mb-1 font-semibold" for="plotTitle">
+              Title
+            </label>
+            <label class="mb-1 font-semibold">Grid</label>
+            <TextInput
+              id="plotTitle"
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"My Plot"}
+              value={""}
+              onChange={(x) => {
+                setPlotOptions((po) => {
+                  return { ...po, title: x };
+                });
+              }}
+            />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300" for="xGrid">X</label>
+              <SelectInput
+                id="xGrid"
+                class="text-primary pb-1 outline-none grow"
+                options={["Yes", "No"]}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    return { ...po, gridX: x == "Yes" };
+                  });
+                }}
+              />
+            </div>
+            <div />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300" for="yGrid">Y</label>
+              <SelectInput
+              id="yGrid"
+                class="text-primary pb-1 outline-none grow"
+                options={["Yes", "No"]}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    return { ...po, gridY: x == "Yes" };
+                  });
+                }}
+              />
+            </div>
+            <label class="mb-1 font-semibold">
+              Dimensions
+            </label>
+            <label class="mb-1 font-semibold">
+              Limits
+            </label>
+            <div class="flex flex-row items-center gap-2">
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                value={"6"}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    return { ...po, width: parseInt(x, 0) };
+                  });
+                }}
+              />
+              <NoHydration>
+                <ImCross class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                value={"4"}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    return { ...po, height: parseInt(x, 0) };
+                  });
+                }}
+              />
+            </div>
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300">X</label>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    let obj = { ...po };
+                    if (obj.xLim) {
+                      obj.xLim[0] = parseInt(x, 0);
+                    } else {
+                      obj.xLim = [parseInt(x, 0), null];
+                    }
+                    if (x == "") {
+                      obj.xLim = null;
+                    }
+                    return obj;
+                  });
+                }}
+              />
+              <NoHydration>
+                <FaSolidArrowRightLong class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    let obj = { ...po };
+                    if (obj.xLim) {
+                      obj.xLim[1] = parseInt(x, 0);
+                    } else {
+                      obj.xLim = [null, parseInt(x, 0)];
+                    }
+                    if (x == "") {
+                      obj.xLim = null;
+                    }
+                    return obj;
+                  });
+                }}
+              />
+            </div>
+            <SelectInput
+              class="text-primary pb-1 outline-none"
+              options={["Inches", "Pixels", "Centimeters"]}
+              //@ts-ignore
+              onChange={(x) => setPlotOptions(po => {return { ...po, dimUnit: x }})}
+            />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300">Y</label>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    let obj = { ...po };
+                    if (obj.yLim) {
+                      obj.yLim[0] = parseInt(x, 0);
+                    } else {
+                      obj.yLim = [parseInt(x, 0), null];
+                    }
+                    if (x == "") {
+                      obj.yLim = null;
+                    }
+                    return obj;
+                  });
+                }}
+              />
+              <NoHydration>
+                <FaSolidArrowRightLong class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  setPlotOptions((po) => {
+                    let obj = { ...po };
+                    if (obj.yLim) {
+                      obj.yLim[1] = parseInt(x, 0);
+                    } else {
+                      obj.yLim = [null, parseInt(x, 0)];
+                    }
+                    if (x == "") {
+                      obj.yLim = null;
+                    }
+                    return obj;
+                  });
+                }}
+              />
+            </div>
+            <label class="mb-1 font-semibold col-span-2">Labels</label>
+            <TextInput
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"X Label"}
+              onChange={(x) => setPlotOptions(po => {return { ...po, xLabel: x }})}
+            />
+            <TextInput
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"Y Label"}
+              onChange={(x) => setPlotOptions(po => {return { ...po, yLabel: x }})}
             />
           </div>
         </div>

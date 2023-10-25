@@ -42,24 +42,21 @@ let defaultLayout = {
 };
 
 export default function Plot(props: PlotProps) {
-  let layout = { ...defaultLayout, ...props.layout };
+  let layout = () => {return{ ...defaultLayout, ...props.layout, width: props.width, height: props.height }};
 
   let plotId = "plot_div_" + Math.random();
 
   onMount(() => {
-    console.log(props.data);
-    Plotly.newPlot(plotId, props.data, layout, {
-      responsive: true,
+    Plotly.newPlot(plotId, props.data, layout(), {
+      responsive: false,
       displaylogo: false,
       displayModeBar: false,
     });
   });
 
   createEffect(() => {
-    console.log(props.data);
-    layout = { ...defaultLayout, ...props.layout };
-    Plotly.newPlot(plotId, props.data, layout, {
-      responsive: true,
+    Plotly.newPlot(plotId, props.data, layout(), {
+      responsive: false,
       displaylogo: false,
       displayModeBar: false,
     });
