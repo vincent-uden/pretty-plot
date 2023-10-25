@@ -60,7 +60,7 @@ export default function PlotSettings({
         "border-color": (subplotColors[plot.subplot ?? -1] ?? "#ffffff") + "55",
       }}
     >
-      <div class="p-4 rounded-xl">
+      <div class="p-4 rounded-xl w-64">
         <div
           class="flex flex-row gap-4 items-center select-none cursor-pointer"
           onClick={() => {

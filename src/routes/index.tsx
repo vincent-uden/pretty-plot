@@ -17,6 +17,7 @@ import { DraggableList } from "~/components/DraggableList";
 
 import mathJaxConfUrl from "../MathJaxConf.js";
 import { createScriptLoader } from "@solid-primitives/script-loader";
+import { SlideInput } from "~/components/SlideInput.jsx";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
@@ -213,6 +214,12 @@ export default function Home() {
     null,
   );
 
+  const [spMargin, setSPMargin] = createSignal<number>(0.1);
+
+  createEffect(() => {
+    console.log(spMargin());
+    });
+
   const [dragging, setDragging] = createSignal<boolean>(false);
 
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
@@ -223,7 +230,7 @@ export default function Home() {
     );
   }
 
-  function generateLayout() {
+  function generateLayout(options: {subplotMargin?: number}) {
     let output: any = {
       autosize: false,
       title: {
@@ -258,15 +265,21 @@ export default function Home() {
 
     const spacing = 1.0 / subplots().length;
 
+    const margin = options.subplotMargin ?? 0.1;
+    const N = subplots().length;
+    const width = (1.0 - (N - 1) * margin) / N;
+
+    let j = 0;
     for (const sp of subplots()) {
       output["xaxis" + sp] = {
-        domain: [(sp - 1) * spacing, sp * spacing],
+        domain: [width * j + (j > 0 ? 1 : 0) * margin * j, width * j + (j > 0 ? 1 : 0) * margin * j + width ],
         anchor: "y" + sp,
       };
       output["yaxis" + sp] = {
         domain: [0, 1.0],
         anchor: "x" + sp,
       };
+      j++;
     }
 
     return output;
@@ -354,7 +367,7 @@ export default function Home() {
               fallback={<p></p>}
               width={dimToPixels(plotOptions().width, plotOptions().dimUnit)}
               height={dimToPixels(plotOptions().height, plotOptions().dimUnit)}
-              layout={generateLayout()}
+              layout={generateLayout({subplotMargin: spMargin()})}
               exportName={outputName()}
               exportFormat={outputFormat().toLowerCase() as any}
             />
@@ -606,6 +619,15 @@ export default function Home() {
                 </div>
               </Show>
             </div>
+            <Show when={subplots().length > 0}>
+            <div class="h-4" />
+            <p class="text-body text-lg">Margin</p>
+            <div class="h-2" />
+            <div class="px-4">
+              <SlideInput from={0.0} to={1.0} out={setSPMargin} value={0.0}/>
+              </div>
+            <div class="h-8" />
+            </Show>
           </div>
           <div class="h-4" />
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
