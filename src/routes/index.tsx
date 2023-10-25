@@ -74,8 +74,8 @@ export type UserPlotOptions = {
   width: number;
   height: number;
   dimUnit: "Inches" | "Pixels" | "Centimeters";
-  xLim: Array<number|null> | null;
-  yLim: Array<number|null> | null;
+  xLim: Array<number | null> | null;
+  yLim: Array<number | null> | null;
   xLabel: string;
   yLabel: string;
 };
@@ -185,7 +185,7 @@ function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
     return x * 100;
   }
   if (unit == "Centimeters") {
-    return x / 2.54 * 100;
+    return (x / 2.54) * 100;
   }
   return x;
 }
@@ -213,12 +213,14 @@ export default function Home() {
   const [paintingSubplot, setPaintingSubplot] = createSignal<number | null>(
     null,
   );
+  const [spOptIndex, setSPOptIndex] = createSignal<number | null>(null);
+  const [spOptions, setSpOptions] = createSignal<UserPlotOptions[]>([]);
 
   const [spMargin, setSPMargin] = createSignal<number>(0.1);
 
   createEffect(() => {
     console.log(spMargin());
-    });
+  });
 
   const [dragging, setDragging] = createSignal<boolean>(false);
 
@@ -230,7 +232,7 @@ export default function Home() {
     );
   }
 
-  function generateLayout(options: {subplotMargin?: number}) {
+  function generateLayout(options: { subplotMargin?: number }) {
     let output: any = {
       autosize: false,
       title: {
@@ -238,7 +240,7 @@ export default function Home() {
       },
       font: {
         family: "Computer Modern",
-      }
+      },
     };
 
     if (subplots().length == 0) {
@@ -272,7 +274,10 @@ export default function Home() {
     let j = 0;
     for (const sp of subplots()) {
       output["xaxis" + sp] = {
-        domain: [width * j + (j > 0 ? 1 : 0) * margin * j, width * j + (j > 0 ? 1 : 0) * margin * j + width ],
+        domain: [
+          width * j + (j > 0 ? 1 : 0) * margin * j,
+          width * j + (j > 0 ? 1 : 0) * margin * j + width,
+        ],
         anchor: "y" + sp,
       };
       output["yaxis" + sp] = {
@@ -288,8 +293,8 @@ export default function Home() {
   onMount(() => {
     window["MathJax"] = {
       tex: {
-        inlineMath: [["$","$"]]
-      }
+        inlineMath: [["$", "$"]],
+      },
     };
   });
 
@@ -350,15 +355,19 @@ export default function Home() {
             />
           </div>
           <div class="h-4" />
-          <ConfirmButton onClick={() => {
-            let allBtns = document.getElementsByClassName("modebar-btn");
-            for (const btn of allBtns) {
-              if (btn.getAttribute("data-title")?.startsWith("SVG_EXPORT")) {
-                // @ts-ignore
-                btn.click();
+          <ConfirmButton
+            onClick={() => {
+              let allBtns = document.getElementsByClassName("modebar-btn");
+              for (const btn of allBtns) {
+                if (btn.getAttribute("data-title")?.startsWith("SVG_EXPORT")) {
+                  // @ts-ignore
+                  btn.click();
+                }
               }
-            }
-          }}>Download</ConfirmButton>
+            }}
+          >
+            Download
+          </ConfirmButton>
         </aside>
         <div class="grow">
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col items-center">
@@ -367,13 +376,36 @@ export default function Home() {
               fallback={<p></p>}
               width={dimToPixels(plotOptions().width, plotOptions().dimUnit)}
               height={dimToPixels(plotOptions().height, plotOptions().dimUnit)}
-              layout={generateLayout({subplotMargin: spMargin()})}
+              layout={generateLayout({ subplotMargin: spMargin() })}
               exportName={outputName()}
               exportFormat={outputFormat().toLowerCase() as any}
             />
           </div>
           <div class="h-4" />
-          <div class="bg-white rounded-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2">
+          <div class="flex flex-row rounded-t-xl gap-2">
+            <For each={subplots()}>
+              {(sp, i) => {
+                return (
+                  <div class={`grow flex flex-row rounded-t-xl bg-white items-center px-4 cursor-pointer select-none ${
+                        i() == spOptIndex() ? "opacity-100" : "opacity-50"
+                  }`}
+                  onClick={() => {setSPOptIndex(i())}}
+                  >
+                    <p
+                      class={`grow py-4 px-2`}
+                    >
+                      {subplots().length > 6 ? i() : "Subplot " + i()}
+                    </p>
+                    <div
+                      class="w-8 h-8 rounded-full opacity-70"
+                      style={{ "background-color": subplotColors[sp] }}
+                    />
+                  </div>
+                );
+              }}
+            </For>
+          </div>
+          <div class="bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2">
             <label class="mb-1 font-semibold" for="plotTitle">
               Title
             </label>
@@ -390,7 +422,9 @@ export default function Home() {
               }}
             />
             <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300" for="xGrid">X</label>
+              <label class="font-semibold text-blue-300" for="xGrid">
+                X
+              </label>
               <SelectInput
                 id="xGrid"
                 class="text-primary pb-1 outline-none grow"
@@ -404,9 +438,11 @@ export default function Home() {
             </div>
             <div />
             <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300" for="yGrid">Y</label>
+              <label class="font-semibold text-blue-300" for="yGrid">
+                Y
+              </label>
               <SelectInput
-              id="yGrid"
+                id="yGrid"
                 class="text-primary pb-1 outline-none grow"
                 options={["Yes", "No"]}
                 onChange={(x) => {
@@ -416,12 +452,8 @@ export default function Home() {
                 }}
               />
             </div>
-            <label class="mb-1 font-semibold">
-              Dimensions
-            </label>
-            <label class="mb-1 font-semibold">
-              Limits
-            </label>
+            <label class="mb-1 font-semibold">Dimensions</label>
+            <label class="mb-1 font-semibold">Limits</label>
             <div class="flex flex-row items-center gap-2">
               <TextInput
                 class="text-primary pb-1 outline-none grow"
@@ -491,7 +523,11 @@ export default function Home() {
               class="text-primary pb-1 outline-none"
               options={["Inches", "Pixels", "Centimeters"]}
               //@ts-ignore
-              onChange={(x) => setPlotOptions(po => {return { ...po, dimUnit: x }})}
+              onChange={(x) =>
+                setPlotOptions((po) => {
+                  return { ...po, dimUnit: x };
+                })
+              }
             />
             <div class="flex flex-row items-center gap-2">
               <label class="font-semibold text-blue-300">Y</label>
@@ -539,12 +575,20 @@ export default function Home() {
             <TextInput
               class="text-primary pb-1 outline-none w-full"
               placeholder={"X Label"}
-              onChange={(x) => setPlotOptions(po => {return { ...po, xLabel: x }})}
+              onChange={(x) =>
+                setPlotOptions((po) => {
+                  return { ...po, xLabel: x };
+                })
+              }
             />
             <TextInput
               class="text-primary pb-1 outline-none w-full"
               placeholder={"Y Label"}
-              onChange={(x) => setPlotOptions(po => {return { ...po, yLabel: x }})}
+              onChange={(x) =>
+                setPlotOptions((po) => {
+                  return { ...po, yLabel: x };
+                })
+              }
             />
           </div>
         </div>
@@ -578,6 +622,9 @@ export default function Home() {
                 onClick={() => {
                   if (paintingSubplot() == null) {
                     setSubplots((x) => [...x, x.length + 1]);
+                    if (spOptIndex() == null) {
+                      setSPOptIndex(0);
+                    }
                   } else {
                     setPaintingSubplot(null);
                   }
@@ -607,6 +654,9 @@ export default function Home() {
                         return x;
                       }),
                     );
+                    if (len - 1 == 0) {
+                      setSPOptIndex(null);
+                    }
                     setPaintingSubplot(null);
                   }}
                 >
@@ -620,13 +670,13 @@ export default function Home() {
               </Show>
             </div>
             <Show when={subplots().length > 0}>
-            <div class="h-4" />
-            <p class="text-body text-lg">Margin</p>
-            <div class="h-2" />
-            <div class="px-4">
-              <SlideInput from={0.0} to={1.0} out={setSPMargin} value={0.0}/>
+              <div class="h-4" />
+              <p class="text-body text-lg">Margin</p>
+              <div class="h-2" />
+              <div class="px-4">
+                <SlideInput from={0.0} to={1.0} out={setSPMargin} value={0.0} />
               </div>
-            <div class="h-8" />
+              <div class="h-8" />
             </Show>
           </div>
           <div class="h-4" />
@@ -667,7 +717,6 @@ export default function Home() {
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg" />
         </aside>
       </div>
-
     </main>
   );
 }
