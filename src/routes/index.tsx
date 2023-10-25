@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, onMount, Show } from "solid-js";
 import { TbFileExport } from "solid-icons/tb";
 import { IoAddCircle, IoRemoveCircle } from "solid-icons/io";
 import { ImCross } from "solid-icons/im";
@@ -14,6 +14,9 @@ import { unstable_clientOnly } from "solid-start";
 import Papa from "papaparse";
 import { createStore, produce } from "solid-js/store";
 import { DraggableList } from "~/components/DraggableList";
+
+import mathJaxConfUrl from "../MathJaxConf.js";
+import { createScriptLoader } from "@solid-primitives/script-loader";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
@@ -212,11 +215,6 @@ export default function Home() {
 
   const [dragging, setDragging] = createSignal<boolean>(false);
 
-  createEffect(() => {
-    console.log(outputFormat());
-    console.log(outputName());
-  });
-
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
       (x) => x.id == p.id,
@@ -231,6 +229,9 @@ export default function Home() {
       title: {
         text: plotOptions().title,
       },
+      font: {
+        family: "Computer Modern",
+      }
     };
 
     if (subplots().length == 0) {
@@ -270,6 +271,14 @@ export default function Home() {
 
     return output;
   }
+
+  onMount(() => {
+    window["MathJax"] = {
+      tex: {
+        inlineMath: [["$","$"]]
+      }
+    };
+  });
 
   return (
     <main class="mx-auto text-gray-700 p-4">
@@ -636,6 +645,7 @@ export default function Home() {
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg" />
         </aside>
       </div>
+
     </main>
   );
 }

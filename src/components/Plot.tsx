@@ -1,3 +1,4 @@
+import { createScriptLoader } from "@solid-primitives/script-loader";
 import * as Plotly from "plotly.js-basic-dist";
 
 import { createEffect, onMount } from "solid-js";
@@ -49,6 +50,11 @@ export default function Plot(props: PlotProps) {
 
   let plotId = "plot_div_" + Math.random();
 
+  createScriptLoader({
+    id: "MathJax-script",
+    src: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js",
+  });
+
   onMount(() => {
     Plotly.newPlot(plotId, props.data, layout(), {
       responsive: false,
@@ -91,5 +97,6 @@ export default function Plot(props: PlotProps) {
     });
   });
 
-  return <div id={plotId}></div>;
+  return <><div id={plotId}></div>
+  </>;
 }

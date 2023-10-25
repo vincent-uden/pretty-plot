@@ -23,6 +23,7 @@ module.exports = {
       fontFamily: {
         heading: "Noto Sans",
         body: "Roboto",
+        math: "Computer Modern",
       },
     },
   },

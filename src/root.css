@@ -23,3 +23,8 @@
 .modebar-container {
     visibility: hidden;
 }
+
+@font-face {
+    font-family: "Computer Modern";
+    src: url("/cmunrm.ttf");
+}
