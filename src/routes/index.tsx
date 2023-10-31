@@ -190,10 +190,7 @@ function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
   return x;
 }
 
-export default function Home() {
-  const [plots, setPlots] = createStore<UserPlot[]>([]);
-  const [dataInput, setDataInput] = createSignal("");
-  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({
+const defaultOps: UserPlotOptions= {
     title: "",
     gridX: true,
     gridY: true,
@@ -204,7 +201,12 @@ export default function Home() {
     yLim: null,
     xLabel: "",
     yLabel: "",
-  });
+};
+
+export default function Home() {
+  const [plots, setPlots] = createStore<UserPlot[]>([]);
+  const [dataInput, setDataInput] = createSignal("");
+  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({...defaultOps});
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("SVG");
@@ -261,8 +263,6 @@ export default function Home() {
       }
     }
 
-    const spacing = 1.0 / subplots().length;
-
     const margin = options.subplotMargin ?? 0.1;
     const N = subplots().length;
     const width = (1.0 - (N - 1) * margin) / N;
@@ -275,10 +275,20 @@ export default function Home() {
           width * j + (j > 0 ? 1 : 0) * margin * j + width,
         ],
         anchor: "y" + sp,
+        range: (spOptions()[j] ?? defaultOps).xLim,
+        title: {
+          text: (spOptions()[j] ?? defaultOps).xLabel,
+        },
+        showgrid: (spOptions()[j] ?? defaultOps).gridX,
       };
       output["yaxis" + sp] = {
         domain: [0, 1.0],
         anchor: "x" + sp,
+        range: (spOptions()[j] ?? defaultOps).yLim,
+        title: {
+          text: (spOptions()[j] ?? defaultOps).yLabel,
+        },
+        showgrid: (spOptions()[j] ?? defaultOps).gridY,
       };
       j++;
     }
@@ -962,6 +972,7 @@ export default function Home() {
                 onClick={() => {
                   if (paintingSubplot() == null) {
                     setSubplots((x) => [...x, x.length + 1]);
+                    setSpOptions((x) => [...x, {...defaultOps}]);
                     if (spOptIndex() == null) {
                       setSPOptIndex(0);
                     }
@@ -983,6 +994,8 @@ export default function Home() {
                   onClick={() => {
                     const len = subplots().length;
                     setSubplots((x) => x.slice(0, x.length - 1));
+                    setSpOptions((x) => x.slice(0, x.length - 1));
+                    setSPOptIndex((x) => Math.min(x!!, len - 2));
                     setPlots(
                       (x) => (x.subplot != null && x.subplot >= len) ?? false,
                       produce((x) => {
