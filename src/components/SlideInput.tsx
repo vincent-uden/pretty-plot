@@ -15,7 +15,6 @@ export function SlideInput(props: SlideProps) {
   function moveSlider(e) {
     const clientRect = trackRef.getBoundingClientRect();
     setPos(Math.max(Math.min(e.clientX - clientRect.x, clientRect.width), 0));
-
   }
 
   function release() {

@@ -190,6 +190,10 @@ function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
   return x;
 }
 
+function maxMargin(n: number) {
+  return 1 / (Math.max(n-1, 1));
+}
+
 const defaultOps: UserPlotOptions= {
     title: "",
     gridX: true,
@@ -1027,7 +1031,7 @@ export default function Home() {
               <p class="text-body text-lg">Margin</p>
               <div class="h-2" />
               <div class="px-4">
-                <SlideInput from={0.0} to={1.0} out={setSPMargin} value={0.0} />
+                <SlideInput from={0.0} to={maxMargin(subplots().length)} out={setSPMargin} value={0.0} />
               </div>
               <div class="h-8" />
             </Show>
