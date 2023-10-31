@@ -191,26 +191,28 @@ function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
 }
 
 function maxMargin(n: number) {
-  return 1 / (Math.max(n-1, 1));
+  return 1 / Math.max(n - 1, 1);
 }
 
-const defaultOps: UserPlotOptions= {
-    title: "",
-    gridX: true,
-    gridY: true,
-    width: 6,
-    height: 4,
-    dimUnit: "Inches",
-    xLim: null,
-    yLim: null,
-    xLabel: "",
-    yLabel: "",
+const defaultOps: UserPlotOptions = {
+  title: "",
+  gridX: true,
+  gridY: true,
+  width: 6,
+  height: 4,
+  dimUnit: "Inches",
+  xLim: null,
+  yLim: null,
+  xLabel: "",
+  yLabel: "",
 };
 
 export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [dataInput, setDataInput] = createSignal("");
-  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({...defaultOps});
+  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({
+    ...defaultOps,
+  });
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("SVG");
@@ -397,6 +399,55 @@ export default function Home() {
           >
             Download
           </ConfirmButton>
+          <div class="h-8" />
+          <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
+            <h2 class="grow text-primary text-xl">Plot Options</h2>
+            <div class="h-4" />
+            <label class="mb-1 font-semibold" for="plotTitle">
+              Title
+            </label>
+            <TextInput
+              id="plotTitle"
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"My Plot"}
+              value={""}
+              onChange={(x) => {
+                setPlotOptions(po => {return {...po, title: x}});
+              }}
+            />
+            <div class="h-2" />
+            <label class="mb-1 font-semibold">Dimensions</label>
+            <div class="flex flex-row items-center gap-2">
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                value={"6"}
+                onChange={(x) => {
+                  setPlotOptions(po => {return {...po, width: parseInt(x, 0)}});
+                }}
+              />
+              <NoHydration>
+                <ImCross class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                value={"4"}
+                onChange={(x) => {
+                  setPlotOptions(po => {return {...po, height: parseInt(x, 0)}});
+                }}
+              />
+            </div>
+            <div class="h-2" />
+            <SelectInput
+              class="text-primary pb-1 outline-none"
+              options={["Inches", "Pixels", "Centimeters"]}
+              onChange={(x) =>
+                //@ts-ignore
+                setPlotOptions((po) => {
+                  return { ...po, dimUnit: x };
+                })
+              }
+            />
+          </div>
         </aside>
         <div class="grow">
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col items-center">
@@ -438,92 +489,35 @@ export default function Home() {
           </div>
           {/* Plot options / Subplot options if there are multiple subplots */}
           <For each={subplots()}>
-          {(x, i) => (
-          <div class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${i() == spOptIndex() ? "" : "hidden"}`}>
-            <label class="mb-1 font-semibold" for="plotTitle">
-              Title
-            </label>
-            <label class="mb-1 font-semibold">Grid</label>
-            <TextInput
-              id="plotTitle"
-              class="text-primary pb-1 outline-none w-full"
-              placeholder={"My Plot"}
-              value={""}
-              onChange={(x) => {
-                editPlotOption("title", x);
-              }}
-            />
-            <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300" for="xGrid">
-                X
-              </label>
-              <SelectInput
-                id="xGrid"
-                class="text-primary pb-1 outline-none grow"
-                options={["Yes", "No"]}
-                onChange={(x) => {
-                  editPlotOption("gridX", x == "Yes");
-                }}
-              />
-            </div>
-            <div />
-            <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300" for="yGrid">
-                Y
-              </label>
-              <SelectInput
-                id="yGrid"
-                class="text-primary pb-1 outline-none grow"
-                options={["Yes", "No"]}
-                onChange={(x) => {
-                  editPlotOption("gridY", x == "Yes");
-                }}
-              />
-            </div>
-            <label class="mb-1 font-semibold">Dimensions</label>
-            <label class="mb-1 font-semibold">Limits</label>
-            <div class="flex flex-row items-center gap-2">
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                value={"6"}
-                onChange={(x) => {
-                  editPlotOption("width", parseInt(x, 0));
-                }}
-              />
-              <NoHydration>
-                <ImCross class="text-accent" />
-              </NoHydration>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                value={"4"}
-                onChange={(x) => {
-                  editPlotOption("height", parseInt(x, 0));
-                }}
-              />
-            </div>
-            <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300">X</label>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                placeholder={"Auto"}
-                onChange={(x) => {
-                  if (spOptIndex() == null) {
-                    setPlotOptions((po) => {
-                      let obj = { ...po };
-                      if (obj.xLim) {
-                        obj.xLim[0] = parseInt(x, 0);
-                      } else {
-                        obj.xLim = [parseInt(x, 0), null];
-                      }
-                      if (x == "") {
-                        obj.xLim = null;
-                      }
-                      return obj;
-                    });
-                  } else {
-                    setSpOptions((options) => {
-                      return options.map((po, i) => {
-                        if (i == spOptIndex()) {
+            {(x, i) => (
+              <div
+                class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${
+                  i() == spOptIndex() ? "" : "hidden"
+                }`}
+              >
+                <label class="mb-1 font-semibold">Grid</label>
+                <label class="mb-1 font-semibold">Limits</label>
+                <div class="flex flex-row items-center gap-2">
+                  <label class="font-semibold text-blue-300" for="xGrid">
+                    X
+                  </label>
+                  <SelectInput
+                    id="xGrid"
+                    class="text-primary pb-1 outline-none grow"
+                    options={["Yes", "No"]}
+                    onChange={(x) => {
+                      editPlotOption("gridX", x == "Yes");
+                    }}
+                  />
+                </div>
+                <div class="flex flex-row items-center gap-2">
+                  <label class="font-semibold text-blue-300">X</label>
+                  <TextInput
+                    class="text-primary pb-1 outline-none grow"
+                    placeholder={"Auto"}
+                    onChange={(x) => {
+                      if (spOptIndex() == null) {
+                        setPlotOptions((po) => {
                           let obj = { ...po };
                           if (obj.xLim) {
                             obj.xLim[0] = parseInt(x, 0);
@@ -534,38 +528,38 @@ export default function Home() {
                             obj.xLim = null;
                           }
                           return obj;
-                        } else {
-                          return po;
-                        }
-                      });
-                    });
-                  }
-                }}
-              />
-              <NoHydration>
-                <FaSolidArrowRightLong class="text-accent" />
-              </NoHydration>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                placeholder={"Auto"}
-                onChange={(x) => {
-                  if (spOptIndex() == null) {
-                    setPlotOptions((po) => {
-                      let obj = { ...po };
-                      if (obj.xLim) {
-                        obj.xLim[1] = parseInt(x, 0);
+                        });
                       } else {
-                        obj.xLim = [null, parseInt(x, 0)];
+                        setSpOptions((options) => {
+                          return options.map((po, i) => {
+                            if (i == spOptIndex()) {
+                              let obj = { ...po };
+                              if (obj.xLim) {
+                                obj.xLim[0] = parseInt(x, 0);
+                              } else {
+                                obj.xLim = [parseInt(x, 0), null];
+                              }
+                              if (x == "") {
+                                obj.xLim = null;
+                              }
+                              return obj;
+                            } else {
+                              return po;
+                            }
+                          });
+                        });
                       }
-                      if (x == "") {
-                        obj.xLim = null;
-                      }
-                      return obj;
-                    });
-                  } else {
-                    setSpOptions((options) => {
-                      return options.map((po, i) => {
-                        if (i == spOptIndex()) {
+                    }}
+                  />
+                  <NoHydration>
+                    <FaSolidArrowRightLong class="text-accent" />
+                  </NoHydration>
+                  <TextInput
+                    class="text-primary pb-1 outline-none grow"
+                    placeholder={"Auto"}
+                    onChange={(x) => {
+                      if (spOptIndex() == null) {
+                        setPlotOptions((po) => {
                           let obj = { ...po };
                           if (obj.xLim) {
                             obj.xLim[1] = parseInt(x, 0);
@@ -576,48 +570,51 @@ export default function Home() {
                             obj.xLim = null;
                           }
                           return obj;
-                        } else {
-                          return po;
-                        }
-                      });
-                    });
-                  }
-                }}
-              />
-            </div>
-            <SelectInput
-              class="text-primary pb-1 outline-none"
-              options={["Inches", "Pixels", "Centimeters"]}
-              onChange={(x) =>
-                //@ts-ignore
-                setPlotOptions((po) => {
-                  return { ...po, dimUnit: x };
-                })
-              }
-            />
-            <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300">Y</label>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                placeholder={"Auto"}
-                onChange={(x) => {
-                  if (spOptIndex() == null) {
-                    setPlotOptions((po) => {
-                      let obj = { ...po };
-                      if (obj.yLim) {
-                        obj.yLim[0] = parseInt(x, 0);
+                        });
                       } else {
-                        obj.yLim = [parseInt(x, 0), null];
+                        setSpOptions((options) => {
+                          return options.map((po, i) => {
+                            if (i == spOptIndex()) {
+                              let obj = { ...po };
+                              if (obj.xLim) {
+                                obj.xLim[1] = parseInt(x, 0);
+                              } else {
+                                obj.xLim = [null, parseInt(x, 0)];
+                              }
+                              if (x == "") {
+                                obj.xLim = null;
+                              }
+                              return obj;
+                            } else {
+                              return po;
+                            }
+                          });
+                        });
                       }
-                      if (x == "") {
-                        obj.yLim = null;
-                      }
-                      return obj;
-                    });
-                  } else {
-                    setSpOptions((options) => {
-                      return options.map((po, i) => {
-                        if (i == spOptIndex()) {
+                    }}
+                  />
+                </div>
+                <div class="flex flex-row items-center gap-2">
+                  <label class="font-semibold text-blue-300" for="yGrid">
+                    Y
+                  </label>
+                  <SelectInput
+                    id="yGrid"
+                    class="text-primary pb-1 outline-none grow"
+                    options={["Yes", "No"]}
+                    onChange={(x) => {
+                      editPlotOption("gridY", x == "Yes");
+                    }}
+                  />
+                </div>
+                <div class="flex flex-row items-center gap-2">
+                  <label class="font-semibold text-blue-300">Y</label>
+                  <TextInput
+                    class="text-primary pb-1 outline-none grow"
+                    placeholder={"Auto"}
+                    onChange={(x) => {
+                      if (spOptIndex() == null) {
+                        setPlotOptions((po) => {
                           let obj = { ...po };
                           if (obj.yLim) {
                             obj.yLim[0] = parseInt(x, 0);
@@ -628,38 +625,38 @@ export default function Home() {
                             obj.yLim = null;
                           }
                           return obj;
-                        } else {
-                          return po;
-                        }
-                      });
-                    });
-                  }
-                }}
-              />
-              <NoHydration>
-                <FaSolidArrowRightLong class="text-accent" />
-              </NoHydration>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                placeholder={"Auto"}
-                onChange={(x) => {
-                  if (spOptIndex() == null) {
-                    setPlotOptions((po) => {
-                      let obj = { ...po };
-                      if (obj.yLim) {
-                        obj.yLim[1] = parseInt(x, 0);
+                        });
                       } else {
-                        obj.yLim = [null, parseInt(x, 0)];
+                        setSpOptions((options) => {
+                          return options.map((po, i) => {
+                            if (i == spOptIndex()) {
+                              let obj = { ...po };
+                              if (obj.yLim) {
+                                obj.yLim[0] = parseInt(x, 0);
+                              } else {
+                                obj.yLim = [parseInt(x, 0), null];
+                              }
+                              if (x == "") {
+                                obj.yLim = null;
+                              }
+                              return obj;
+                            } else {
+                              return po;
+                            }
+                          });
+                        });
                       }
-                      if (x == "") {
-                        obj.yLim = null;
-                      }
-                      return obj;
-                    });
-                  } else {
-                    setSpOptions((options) => {
-                      return options.map((po, i) => {
-                        if (i == spOptIndex()) {
+                    }}
+                  />
+                  <NoHydration>
+                    <FaSolidArrowRightLong class="text-accent" />
+                  </NoHydration>
+                  <TextInput
+                    class="text-primary pb-1 outline-none grow"
+                    placeholder={"Auto"}
+                    onChange={(x) => {
+                      if (spOptIndex() == null) {
+                        setPlotOptions((po) => {
                           let obj = { ...po };
                           if (obj.yLim) {
                             obj.yLim[1] = parseInt(x, 0);
@@ -670,43 +667,52 @@ export default function Home() {
                             obj.yLim = null;
                           }
                           return obj;
-                        } else {
-                          return po;
-                        }
-                      });
-                    });
-                  }
-                }}
-              />
-            </div>
-            <label class="mb-1 font-semibold col-span-2">Labels</label>
-            <TextInput
-              class="text-primary pb-1 outline-none w-full"
-              placeholder={"X Label"}
-              onChange={(x) => editPlotOption("xLabel", x)}
-            />
-            <TextInput
-              class="text-primary pb-1 outline-none w-full"
-              placeholder={"Y Label"}
-              onChange={(x) => editPlotOption("yLabel", x)}
-            />
-          </div>
-          )}
+                        });
+                      } else {
+                        setSpOptions((options) => {
+                          return options.map((po, i) => {
+                            if (i == spOptIndex()) {
+                              let obj = { ...po };
+                              if (obj.yLim) {
+                                obj.yLim[1] = parseInt(x, 0);
+                              } else {
+                                obj.yLim = [null, parseInt(x, 0)];
+                              }
+                              if (x == "") {
+                                obj.yLim = null;
+                              }
+                              return obj;
+                            } else {
+                              return po;
+                            }
+                          });
+                        });
+                      }
+                    }}
+                  />
+                </div>
+                <div class="cols-2 h-2" />
+                <label class="mb-1 font-semibold col-span-2">Labels</label>
+                <TextInput
+                  class="text-primary pb-1 outline-none w-full"
+                  placeholder={"X Label"}
+                  onChange={(x) => editPlotOption("xLabel", x)}
+                />
+                <TextInput
+                  class="text-primary pb-1 outline-none w-full"
+                  placeholder={"Y Label"}
+                  onChange={(x) => editPlotOption("yLabel", x)}
+                />
+              </div>
+            )}
           </For>
-          <div class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${spOptIndex() == null ? "" : "hidden"}`}>
-            <label class="mb-1 font-semibold" for="plotTitle">
-              Title
-            </label>
+          <div
+            class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${
+              spOptIndex() == null ? "" : "hidden"
+            }`}
+          >
             <label class="mb-1 font-semibold">Grid</label>
-            <TextInput
-              id="plotTitle"
-              class="text-primary pb-1 outline-none w-full"
-              placeholder={"My Plot"}
-              value={""}
-              onChange={(x) => {
-                editPlotOption("title", x);
-              }}
-            />
+            <label class="mb-1 font-semibold">Limits</label>
             <div class="flex flex-row items-center gap-2">
               <label class="font-semibold text-blue-300" for="xGrid">
                 X
@@ -717,41 +723,6 @@ export default function Home() {
                 options={["Yes", "No"]}
                 onChange={(x) => {
                   editPlotOption("gridX", x == "Yes");
-                }}
-              />
-            </div>
-            <div />
-            <div class="flex flex-row items-center gap-2">
-              <label class="font-semibold text-blue-300" for="yGrid">
-                Y
-              </label>
-              <SelectInput
-                id="yGrid"
-                class="text-primary pb-1 outline-none grow"
-                options={["Yes", "No"]}
-                onChange={(x) => {
-                  editPlotOption("gridY", x == "Yes");
-                }}
-              />
-            </div>
-            <label class="mb-1 font-semibold">Dimensions</label>
-            <label class="mb-1 font-semibold">Limits</label>
-            <div class="flex flex-row items-center gap-2">
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                value={"6"}
-                onChange={(x) => {
-                  editPlotOption("width", parseInt(x, 0));
-                }}
-              />
-              <NoHydration>
-                <ImCross class="text-accent" />
-              </NoHydration>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                value={"4"}
-                onChange={(x) => {
-                  editPlotOption("height", parseInt(x, 0));
                 }}
               />
             </div>
@@ -839,16 +810,19 @@ export default function Home() {
                 }}
               />
             </div>
-            <SelectInput
-              class="text-primary pb-1 outline-none"
-              options={["Inches", "Pixels", "Centimeters"]}
-              onChange={(x) =>
-                //@ts-ignore
-                setPlotOptions((po) => {
-                  return { ...po, dimUnit: x };
-                })
-              }
-            />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300" for="yGrid">
+                Y
+              </label>
+              <SelectInput
+                id="yGrid"
+                class="text-primary pb-1 outline-none grow"
+                options={["Yes", "No"]}
+                onChange={(x) => {
+                  editPlotOption("gridY", x == "Yes");
+                }}
+              />
+            </div>
             <div class="flex flex-row items-center gap-2">
               <label class="font-semibold text-blue-300">Y</label>
               <TextInput
@@ -976,7 +950,7 @@ export default function Home() {
                 onClick={() => {
                   if (paintingSubplot() == null) {
                     setSubplots((x) => [...x, x.length + 1]);
-                    setSpOptions((x) => [...x, {...defaultOps}]);
+                    setSpOptions((x) => [...x, { ...defaultOps }]);
                     if (spOptIndex() == null) {
                       setSPOptIndex(0);
                     }
@@ -1031,7 +1005,12 @@ export default function Home() {
               <p class="text-body text-lg">Margin</p>
               <div class="h-2" />
               <div class="px-4">
-                <SlideInput from={0.0} to={maxMargin(subplots().length)} out={setSPMargin} value={0.0} />
+                <SlideInput
+                  from={0.0}
+                  to={maxMargin(subplots().length)}
+                  out={setSPMargin}
+                  value={0.0}
+                />
               </div>
               <div class="h-8" />
             </Show>
