@@ -211,16 +211,12 @@ export default function Home() {
 
   const [subplots, setSubplots] = createSignal<number[]>([]);
   const [paintingSubplot, setPaintingSubplot] = createSignal<number | null>(
-    null,
+    null
   );
   const [spOptIndex, setSPOptIndex] = createSignal<number | null>(null);
   const [spOptions, setSpOptions] = createSignal<UserPlotOptions[]>([]);
 
   const [spMargin, setSPMargin] = createSignal<number>(0.1);
-
-  createEffect(() => {
-    console.log(spMargin());
-  });
 
   const [dragging, setDragging] = createSignal<boolean>(false);
 
@@ -228,7 +224,7 @@ export default function Home() {
     setPlots(
       (x) => x.id == p.id,
       // @ts-ignore
-      produce((plot) => (plot[field] = p[field])),
+      produce((plot) => (plot[field] = p[field]))
     );
   }
 
@@ -290,7 +286,26 @@ export default function Home() {
     return output;
   }
 
+  function editPlotOption(key: keyof UserPlotOptions, value: any) {
+    if (spOptIndex() == null) {
+      setPlotOptions((po) => {
+        return { ...po, [key]: value };
+      });
+    } else {
+      setSpOptions((options) => {
+        return options.map((po, i) => {
+          if (i == spOptIndex()) {
+            return { ...po, [key]: value };
+          } else {
+            return po;
+          }
+        });
+      });
+    }
+  }
+
   onMount(() => {
+    // @ts-ignore
     window["MathJax"] = {
       tex: {
         inlineMath: [["$", "$"]],
@@ -382,18 +397,20 @@ export default function Home() {
             />
           </div>
           <div class="h-4" />
+          {/* Subplot tab picker */}
           <div class="flex flex-row rounded-t-xl gap-2">
             <For each={subplots()}>
               {(sp, i) => {
                 return (
-                  <div class={`grow flex flex-row rounded-t-xl bg-white items-center px-4 cursor-pointer select-none ${
-                        i() == spOptIndex() ? "opacity-100" : "opacity-50"
-                  }`}
-                  onClick={() => {setSPOptIndex(i())}}
+                  <div
+                    class={`grow flex flex-row rounded-t-xl bg-white items-center px-4 cursor-pointer select-none ${
+                      i() == spOptIndex() ? "opacity-100" : "opacity-50"
+                    }`}
+                    onClick={() => {
+                      setSPOptIndex(i());
+                    }}
                   >
-                    <p
-                      class={`grow py-4 px-2`}
-                    >
+                    <p class={`grow py-4 px-2`}>
                       {subplots().length > 6 ? i() : "Subplot " + i()}
                     </p>
                     <div
@@ -405,7 +422,10 @@ export default function Home() {
               }}
             </For>
           </div>
-          <div class="bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2">
+          {/* Plot options / Subplot options if there are multiple subplots */}
+          <For each={subplots()}>
+          {(x, i) => (
+          <div class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${i() == spOptIndex() ? "" : "hidden"}`}>
             <label class="mb-1 font-semibold" for="plotTitle">
               Title
             </label>
@@ -416,9 +436,7 @@ export default function Home() {
               placeholder={"My Plot"}
               value={""}
               onChange={(x) => {
-                setPlotOptions((po) => {
-                  return { ...po, title: x };
-                });
+                editPlotOption("title", x);
               }}
             />
             <div class="flex flex-row items-center gap-2">
@@ -430,9 +448,7 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 options={["Yes", "No"]}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    return { ...po, gridX: x == "Yes" };
-                  });
+                  editPlotOption("gridX", x == "Yes");
                 }}
               />
             </div>
@@ -446,9 +462,7 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 options={["Yes", "No"]}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    return { ...po, gridY: x == "Yes" };
-                  });
+                  editPlotOption("gridY", x == "Yes");
                 }}
               />
             </div>
@@ -459,9 +473,7 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 value={"6"}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    return { ...po, width: parseInt(x, 0) };
-                  });
+                  editPlotOption("width", parseInt(x, 0));
                 }}
               />
               <NoHydration>
@@ -471,9 +483,7 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 value={"4"}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    return { ...po, height: parseInt(x, 0) };
-                  });
+                  editPlotOption("height", parseInt(x, 0));
                 }}
               />
             </div>
@@ -483,18 +493,39 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 placeholder={"Auto"}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    let obj = { ...po };
-                    if (obj.xLim) {
-                      obj.xLim[0] = parseInt(x, 0);
-                    } else {
-                      obj.xLim = [parseInt(x, 0), null];
-                    }
-                    if (x == "") {
-                      obj.xLim = null;
-                    }
-                    return obj;
-                  });
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.xLim) {
+                        obj.xLim[0] = parseInt(x, 0);
+                      } else {
+                        obj.xLim = [parseInt(x, 0), null];
+                      }
+                      if (x == "") {
+                        obj.xLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.xLim) {
+                            obj.xLim[0] = parseInt(x, 0);
+                          } else {
+                            obj.xLim = [parseInt(x, 0), null];
+                          }
+                          if (x == "") {
+                            obj.xLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
                 }}
               />
               <NoHydration>
@@ -504,26 +535,47 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 placeholder={"Auto"}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    let obj = { ...po };
-                    if (obj.xLim) {
-                      obj.xLim[1] = parseInt(x, 0);
-                    } else {
-                      obj.xLim = [null, parseInt(x, 0)];
-                    }
-                    if (x == "") {
-                      obj.xLim = null;
-                    }
-                    return obj;
-                  });
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.xLim) {
+                        obj.xLim[1] = parseInt(x, 0);
+                      } else {
+                        obj.xLim = [null, parseInt(x, 0)];
+                      }
+                      if (x == "") {
+                        obj.xLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.xLim) {
+                            obj.xLim[1] = parseInt(x, 0);
+                          } else {
+                            obj.xLim = [null, parseInt(x, 0)];
+                          }
+                          if (x == "") {
+                            obj.xLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
                 }}
               />
             </div>
             <SelectInput
               class="text-primary pb-1 outline-none"
               options={["Inches", "Pixels", "Centimeters"]}
-              //@ts-ignore
               onChange={(x) =>
+                //@ts-ignore
                 setPlotOptions((po) => {
                   return { ...po, dimUnit: x };
                 })
@@ -535,18 +587,39 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 placeholder={"Auto"}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    let obj = { ...po };
-                    if (obj.yLim) {
-                      obj.yLim[0] = parseInt(x, 0);
-                    } else {
-                      obj.yLim = [parseInt(x, 0), null];
-                    }
-                    if (x == "") {
-                      obj.yLim = null;
-                    }
-                    return obj;
-                  });
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.yLim) {
+                        obj.yLim[0] = parseInt(x, 0);
+                      } else {
+                        obj.yLim = [parseInt(x, 0), null];
+                      }
+                      if (x == "") {
+                        obj.yLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.yLim) {
+                            obj.yLim[0] = parseInt(x, 0);
+                          } else {
+                            obj.yLim = [parseInt(x, 0), null];
+                          }
+                          if (x == "") {
+                            obj.yLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
                 }}
               />
               <NoHydration>
@@ -556,18 +629,39 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 placeholder={"Auto"}
                 onChange={(x) => {
-                  setPlotOptions((po) => {
-                    let obj = { ...po };
-                    if (obj.yLim) {
-                      obj.yLim[1] = parseInt(x, 0);
-                    } else {
-                      obj.yLim = [null, parseInt(x, 0)];
-                    }
-                    if (x == "") {
-                      obj.yLim = null;
-                    }
-                    return obj;
-                  });
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.yLim) {
+                        obj.yLim[1] = parseInt(x, 0);
+                      } else {
+                        obj.yLim = [null, parseInt(x, 0)];
+                      }
+                      if (x == "") {
+                        obj.yLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.yLim) {
+                            obj.yLim[1] = parseInt(x, 0);
+                          } else {
+                            obj.yLim = [null, parseInt(x, 0)];
+                          }
+                          if (x == "") {
+                            obj.yLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
                 }}
               />
             </div>
@@ -575,20 +669,266 @@ export default function Home() {
             <TextInput
               class="text-primary pb-1 outline-none w-full"
               placeholder={"X Label"}
-              onChange={(x) =>
-                setPlotOptions((po) => {
-                  return { ...po, xLabel: x };
-                })
-              }
+              onChange={(x) => editPlotOption("xLabel", x)}
             />
             <TextInput
               class="text-primary pb-1 outline-none w-full"
               placeholder={"Y Label"}
+              onChange={(x) => editPlotOption("yLabel", x)}
+            />
+          </div>
+          )}
+          </For>
+          <div class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${spOptIndex() == null ? "" : "hidden"}`}>
+            <label class="mb-1 font-semibold" for="plotTitle">
+              Title
+            </label>
+            <label class="mb-1 font-semibold">Grid</label>
+            <TextInput
+              id="plotTitle"
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"My Plot"}
+              value={""}
+              onChange={(x) => {
+                editPlotOption("title", x);
+              }}
+            />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300" for="xGrid">
+                X
+              </label>
+              <SelectInput
+                id="xGrid"
+                class="text-primary pb-1 outline-none grow"
+                options={["Yes", "No"]}
+                onChange={(x) => {
+                  editPlotOption("gridX", x == "Yes");
+                }}
+              />
+            </div>
+            <div />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300" for="yGrid">
+                Y
+              </label>
+              <SelectInput
+                id="yGrid"
+                class="text-primary pb-1 outline-none grow"
+                options={["Yes", "No"]}
+                onChange={(x) => {
+                  editPlotOption("gridY", x == "Yes");
+                }}
+              />
+            </div>
+            <label class="mb-1 font-semibold">Dimensions</label>
+            <label class="mb-1 font-semibold">Limits</label>
+            <div class="flex flex-row items-center gap-2">
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                value={"6"}
+                onChange={(x) => {
+                  editPlotOption("width", parseInt(x, 0));
+                }}
+              />
+              <NoHydration>
+                <ImCross class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                value={"4"}
+                onChange={(x) => {
+                  editPlotOption("height", parseInt(x, 0));
+                }}
+              />
+            </div>
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300">X</label>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.xLim) {
+                        obj.xLim[0] = parseInt(x, 0);
+                      } else {
+                        obj.xLim = [parseInt(x, 0), null];
+                      }
+                      if (x == "") {
+                        obj.xLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.xLim) {
+                            obj.xLim[0] = parseInt(x, 0);
+                          } else {
+                            obj.xLim = [parseInt(x, 0), null];
+                          }
+                          if (x == "") {
+                            obj.xLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
+                }}
+              />
+              <NoHydration>
+                <FaSolidArrowRightLong class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.xLim) {
+                        obj.xLim[1] = parseInt(x, 0);
+                      } else {
+                        obj.xLim = [null, parseInt(x, 0)];
+                      }
+                      if (x == "") {
+                        obj.xLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.xLim) {
+                            obj.xLim[1] = parseInt(x, 0);
+                          } else {
+                            obj.xLim = [null, parseInt(x, 0)];
+                          }
+                          if (x == "") {
+                            obj.xLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
+                }}
+              />
+            </div>
+            <SelectInput
+              class="text-primary pb-1 outline-none"
+              options={["Inches", "Pixels", "Centimeters"]}
               onChange={(x) =>
+                //@ts-ignore
                 setPlotOptions((po) => {
-                  return { ...po, yLabel: x };
+                  return { ...po, dimUnit: x };
                 })
               }
+            />
+            <div class="flex flex-row items-center gap-2">
+              <label class="font-semibold text-blue-300">Y</label>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.yLim) {
+                        obj.yLim[0] = parseInt(x, 0);
+                      } else {
+                        obj.yLim = [parseInt(x, 0), null];
+                      }
+                      if (x == "") {
+                        obj.yLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.yLim) {
+                            obj.yLim[0] = parseInt(x, 0);
+                          } else {
+                            obj.yLim = [parseInt(x, 0), null];
+                          }
+                          if (x == "") {
+                            obj.yLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
+                }}
+              />
+              <NoHydration>
+                <FaSolidArrowRightLong class="text-accent" />
+              </NoHydration>
+              <TextInput
+                class="text-primary pb-1 outline-none grow"
+                placeholder={"Auto"}
+                onChange={(x) => {
+                  if (spOptIndex() == null) {
+                    setPlotOptions((po) => {
+                      let obj = { ...po };
+                      if (obj.yLim) {
+                        obj.yLim[1] = parseInt(x, 0);
+                      } else {
+                        obj.yLim = [null, parseInt(x, 0)];
+                      }
+                      if (x == "") {
+                        obj.yLim = null;
+                      }
+                      return obj;
+                    });
+                  } else {
+                    setSpOptions((options) => {
+                      return options.map((po, i) => {
+                        if (i == spOptIndex()) {
+                          let obj = { ...po };
+                          if (obj.yLim) {
+                            obj.yLim[1] = parseInt(x, 0);
+                          } else {
+                            obj.yLim = [null, parseInt(x, 0)];
+                          }
+                          if (x == "") {
+                            obj.yLim = null;
+                          }
+                          return obj;
+                        } else {
+                          return po;
+                        }
+                      });
+                    });
+                  }
+                }}
+              />
+            </div>
+            <label class="mb-1 font-semibold col-span-2">Labels</label>
+            <TextInput
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"X Label"}
+              onChange={(x) => editPlotOption("xLabel", x)}
+            />
+            <TextInput
+              class="text-primary pb-1 outline-none w-full"
+              placeholder={"Y Label"}
+              onChange={(x) => editPlotOption("yLabel", x)}
             />
           </div>
         </div>
@@ -652,7 +992,7 @@ export default function Home() {
                           x.subplot = len - 1;
                         }
                         return x;
-                      }),
+                      })
                     );
                     if (len - 1 == 0) {
                       setSPOptIndex(null);
@@ -704,7 +1044,7 @@ export default function Home() {
                       if (paintingSubplot() != null) {
                         updatePlot(
                           { ...plot, subplot: paintingSubplot() },
-                          "subplot",
+                          "subplot"
                         );
                       }
                     }}
