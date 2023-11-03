@@ -24,6 +24,7 @@ module.exports = {
         heading: "Noto Sans",
         body: "Roboto",
         math: "Computer Modern",
+        hand: "Milku",
       },
     },
   },

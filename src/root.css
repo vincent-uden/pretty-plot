@@ -28,3 +28,8 @@
     font-family: "Computer Modern";
     src: url("/cmunrm.ttf");
 }
+
+@font-face {
+    font-family: "Milku";
+    src: url("/Milku.otf");
+}

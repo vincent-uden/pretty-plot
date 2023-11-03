@@ -3,6 +3,7 @@ import { TbFileExport } from "solid-icons/tb";
 import { IoAddCircle, IoRemoveCircle } from "solid-icons/io";
 import { ImCross } from "solid-icons/im";
 import { FaSolidArrowRightLong } from "solid-icons/fa";
+import { FaSolidQuestion } from "solid-icons/fa";
 
 import ConfirmButton from "~/components/ConfirmButton";
 import { NoHydration } from "solid-js/web";
@@ -18,6 +19,8 @@ import { DraggableList } from "~/components/DraggableList";
 import mathJaxConfUrl from "../MathJaxConf.js";
 import { createScriptLoader } from "@solid-primitives/script-loader";
 import { SlideInput } from "~/components/SlideInput.jsx";
+
+import TestSVG from "../test.svg";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
 
@@ -228,6 +231,8 @@ export default function Home() {
 
   const [dragging, setDragging] = createSignal<boolean>(false);
 
+  const [helpVisible, setHelpVisible] = createSignal(false);
+
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
       (x) => x.id == p.id,
@@ -331,14 +336,24 @@ export default function Home() {
 
   return (
     <main class="mx-auto text-gray-700 p-4">
-      <h1 class="max-6-xs text-2xl font-heading uppercase font-extrabold mb-4">
-        <span class="bg-gradient-to-r from-primary to-accent-active inline-block text-transparent bg-clip-text text-6xl">
-          Plot
-        </span>
-        <span class="text-accent opacity-50">.vincentuden.xyz</span>
-      </h1>
+      <div class="flex flex-row items-center mb-4">
+        <h1 class="max-6-xs text-2xl font-heading uppercase font-extrabold grow">
+          <span class="bg-gradient-to-r from-primary to-accent-active inline-block text-transparent bg-clip-text text-6xl">
+            Plot
+          </span>
+          <span class="text-accent opacity-50">.vincentuden.xyz</span>
+        </h1>
+        <div
+          class="w-8 h-8 flex flex-row items-center justify-center text-primary cursor-pointer"
+          onClick={() => setHelpVisible((x) => !x)}
+        >
+          <NoHydration>
+            <FaSolidQuestion size={32} />
+          </NoHydration>
+        </div>
+      </div>
       <div class="flex flex-row gap-8">
-        <aside class="flex flex-col grow-0 basis-64">
+        <aside class="flex flex-col grow-0 basis-64 relative">
           <textarea
             class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none"
             placeholder="Paste your data here (csv, json)"
@@ -346,6 +361,20 @@ export default function Home() {
           >
             {""}
           </textarea>
+          <div
+            class={`absolute left-48 translate-x-10 transition-opacity ${
+              helpVisible() ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
+              Enter your data in this box by copy-paste or drag-and-drop an
+              entire file.
+            </p>
+            <img
+              class="w-16 h-auto rotate-[-15deg] translate-y-4"
+              src={TestSVG}
+            />
+          </div>
           <div class="h-4" />
           <ConfirmButton
             onClick={() => {
@@ -412,7 +441,9 @@ export default function Home() {
               placeholder={"My Plot"}
               value={""}
               onChange={(x) => {
-                setPlotOptions(po => {return {...po, title: x}});
+                setPlotOptions((po) => {
+                  return { ...po, title: x };
+                });
               }}
             />
             <div class="h-2" />
@@ -422,7 +453,9 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 value={"6"}
                 onChange={(x) => {
-                  setPlotOptions(po => {return {...po, width: parseInt(x, 0)}});
+                  setPlotOptions((po) => {
+                    return { ...po, width: parseInt(x, 0) };
+                  });
                 }}
               />
               <NoHydration>
@@ -432,7 +465,9 @@ export default function Home() {
                 class="text-primary pb-1 outline-none grow"
                 value={"4"}
                 onChange={(x) => {
-                  setPlotOptions(po => {return {...po, height: parseInt(x, 0)}});
+                  setPlotOptions((po) => {
+                    return { ...po, height: parseInt(x, 0) };
+                  });
                 }}
               />
             </div>
@@ -921,7 +956,21 @@ export default function Home() {
           </div>
         </div>
         <aside class="basis-64">
-          <div class="bg-white rounded-xl p-4 shadow-lg">
+          <div class="relative bg-white rounded-xl p-4 shadow-lg">
+            <div
+              class={`absolute right-96 transition-opacity -translate-y-16 ${
+                helpVisible() ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <p class="absolute w-48 font-hand text-red-600 text-center">
+                Create subplots by adding them here. Then select a category
+                (indicated by a color) and "paint" each plot below to group them
+                into the correct subplot.
+              </p>
+              <div class="w-16 h-16 translate-x-48 -scale-x-100 rotate-45">
+                <img class="w-16 h-16 " src={TestSVG} />
+              </div>
+            </div>
             <p class="mb-2 text-primary text-xl">Subplots</p>
             <div class="flex flex-row flex-wrap gap-2">
               <For each={subplots()}>
@@ -1018,6 +1067,20 @@ export default function Home() {
           <div class="h-4" />
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
           <div class="flex flex-col gap-4 h-[70vh] overflow-y-scroll py-4">
+            <div
+              class={`absolute right-72 transition-opacity ${
+                helpVisible() ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <p class="absolute w-48 font-hand text-red-600 text-center">
+                Added plots show up here. Drag to change the ordering and click
+                on an entry to edit it's individual settings.
+              </p>
+              <img
+                class="w-16 h-auto rotate-[-145deg] translate-y-28 translate-x-16"
+                src={TestSVG}
+              />
+            </div>
             <DraggableList
               items={() => plots}
               itemsSetter={setPlots}
