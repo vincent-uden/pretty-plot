@@ -4,6 +4,7 @@ import { IoAddCircle, IoRemoveCircle } from "solid-icons/io";
 import { ImCross } from "solid-icons/im";
 import { FaSolidArrowRightLong } from "solid-icons/fa";
 import { FaSolidQuestion } from "solid-icons/fa";
+import { IoClose } from "solid-icons/io";
 
 import ConfirmButton from "~/components/ConfirmButton";
 import { NoHydration } from "solid-js/web";
@@ -344,12 +345,27 @@ export default function Home() {
           <span class="text-accent opacity-50">.vincentuden.xyz</span>
         </h1>
         <div
-          class="w-8 h-8 flex flex-row items-center justify-center text-primary cursor-pointer"
+          class="relative w-12 h-12 text-background cursor-pointer overflow-hidden bg-primary rounded-full"
           onClick={() => setHelpVisible((x) => !x)}
         >
-          <NoHydration>
-            <FaSolidQuestion size={32} />
-          </NoHydration>
+          <div
+            class={`absolute left-2 top-2 ${
+              helpVisible() ? "-translate-y-48" : "translate-y-0"
+            } transition-transform`}
+          >
+            <NoHydration>
+              <FaSolidQuestion size={32} />
+            </NoHydration>
+          </div>
+          <div
+            class={`absolute left-[8.5px] top-[8.5px] scale-125 ${
+              helpVisible() ? "translate-x-0" : "translate-x-48"
+            } transition-transform`}
+          >
+            <NoHydration>
+              <IoClose size={32} />
+            </NoHydration>
+          </div>
         </div>
       </div>
       <div class="flex flex-row gap-8">
