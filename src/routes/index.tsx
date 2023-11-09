@@ -339,6 +339,15 @@ export default function Home() {
     }
   }
 
+  async function fileDropHandler(e: DragEvent) {
+    const file = e.dataTransfer?.files[0];
+    e.preventDefault();
+    const contents = await file?.text();
+    if (contents != null) {
+      setDataInput(contents);
+    }
+  }
+
   onMount(() => {
     // @ts-ignore
     window["MathJax"] = {
@@ -389,8 +398,11 @@ export default function Home() {
       <div class="flex flex-row gap-8">
         <aside class="flex flex-col grow-0 basis-64 relative">
           <textarea
+            id="csvDropZone"
+            onDrop={fileDropHandler}
             class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none"
             placeholder="Paste your data here (csv, json)"
+            value={dataInput()}
             onChange={(e) => setDataInput(e.target.value)}
           >
             {""}
