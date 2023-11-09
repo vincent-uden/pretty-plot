@@ -1,4 +1,4 @@
-import { Accessor, createSignal, Show } from "solid-js";
+import { Accessor, createSignal, onMount, Show } from "solid-js";
 import { subplotColors, UserPlot, UserPlotType } from "~/routes";
 
 import {
@@ -14,8 +14,7 @@ import { IconTypes } from "solid-icons";
 import { isServer, NoHydration } from "solid-js/web";
 import SelectInput from "./SelectInput";
 import TextInput from "./TextInput";
-
-import { HexColorPicker } from "solid-colorful";
+import { SketchPicker } from "solid-color";
 
 type PlotSettingsProps = {
   plot: UserPlot;
@@ -130,19 +129,13 @@ export default function PlotSettings({
               Color
             </label>
             <div />
-            <TextInput
-              id="colorText"
-              class="w-full"
-              value={plot.color}
-              onChange={(c) => updatePlot({ ...plot, color: c }, "color")}
-            />
-            <div class="col-span-2 h-2" />
             <div class="col-span-2 flex flex-row items-center justify-center">
-              <HexColorPicker
+              <SketchPicker
                 color={plot.color}
                 onChange={(c) => {
-                  updatePlot({ ...plot, color: c }, "color");
+                  updatePlot({ ...plot, color: c.hex }, "color");
                 }}
+                presetColors={subplotColors}
               />
             </div>
             <div class="col-span-2 h-2" />
