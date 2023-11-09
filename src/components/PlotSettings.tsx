@@ -11,10 +11,11 @@ import { AiFillPieChart } from "solid-icons/ai";
 import { FaSolidChevronDown } from "solid-icons/fa";
 import { IoTrashBinOutline } from "solid-icons/io";
 import { IconTypes } from "solid-icons";
-import { NoHydration } from "solid-js/web";
+import { isServer, NoHydration } from "solid-js/web";
 import SelectInput from "./SelectInput";
 import TextInput from "./TextInput";
-import { HexColorPicker } from "@tiagotrindade/solid-colorful";
+
+import { HexColorPicker } from "solid-colorful";
 
 type PlotSettingsProps = {
   plot: UserPlot;

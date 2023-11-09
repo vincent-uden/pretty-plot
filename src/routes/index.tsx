@@ -20,6 +20,8 @@ import mathJaxConfUrl from "../MathJaxConf.js";
 import { createScriptLoader } from "@solid-primitives/script-loader";
 import { SlideInput } from "~/components/SlideInput.jsx";
 
+import { template } from "solid-js/web";
+
 import TestSVG from "../test.svg";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
