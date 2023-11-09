@@ -10,7 +10,7 @@ import ConfirmButton from "~/components/ConfirmButton";
 import { NoHydration } from "solid-js/web";
 import TextInput from "~/components/TextInput";
 import SelectInput from "~/components/SelectInput";
-import { unstable_clientOnly } from "solid-start";
+import { Meta, unstable_clientOnly } from "solid-start";
 
 import Papa from "papaparse";
 import { createStore, produce } from "solid-js/store";
@@ -354,6 +354,7 @@ export default function Home() {
 
   return (
     <main class="mx-auto text-gray-700 p-4">
+      <Meta name="description" content="The fastest way to plot CSV Data." />
       <div class="flex flex-row items-center mb-4">
         <h1 class="max-6-xs text-2xl font-heading uppercase font-extrabold grow">
           <span class="bg-gradient-to-r from-primary to-accent-active inline-block text-transparent bg-clip-text text-6xl">
