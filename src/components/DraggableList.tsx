@@ -1,9 +1,7 @@
 import {
   Component,
   For,
-  ParentProps,
   Show,
-  Signal,
   createEffect,
   createSignal,
   onMount,
@@ -123,7 +121,7 @@ export function DraggableList<T>(props: DraggableListProps<T>) {
 
   return (
     <div
-      class="flex flex-col items-center overflow-x-hidden overflow-y-auto custom-scroll py-4"
+      class="flex flex-col items-center overflow-x-hidden overflow-y-auto custom-scroll py-4 min-h-full"
       ref={listRef}
     >
       <For each={items()}>

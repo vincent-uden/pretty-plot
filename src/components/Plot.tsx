@@ -46,9 +46,10 @@ export let defaultLayout = {
 };
 
 export default function Plot(props: PlotProps) {
-  let layout = () => {return{ ...defaultLayout, ...props.layout, width: props.width, height: props.height }};
-
   let plotId = "plot_div_" + Math.random();
+
+  const delay = 50;
+  let updateTimer: any = null;
 
   createScriptLoader({
     id: "MathJax-script",
@@ -56,47 +57,62 @@ export default function Plot(props: PlotProps) {
   });
 
   onMount(() => {
-    Plotly.newPlot(plotId, props.data, layout(), {
+    let layout = { ...defaultLayout, ...props.layout, width: props.width, height: props.height };
+    Plotly.newPlot(plotId, props.data, layout, {
       responsive: false,
       displaylogo: false,
       displayModeBar: true,
-      modeBarButtonsToAdd: [{
-        title: "SVG_EXPORT",
-        name: 'SVG_EXPORT',
-        icon: Plotly.Icons.camera,
-        click: function(gd) {
-          Plotly.downloadImage(gd, {
-            width: props.width ?? 400,
-            height: props.height ?? 400,
-            filename: props.exportName ?? "plot",
-            format: props.exportFormat ?? "svg",
-          })
-        }
-      }]
+      modeBarButtonsToAdd: [
+        {
+          title: "SVG_EXPORT",
+          name: "SVG_EXPORT",
+          icon: Plotly.Icons.camera,
+          click: function (gd) {
+            Plotly.downloadImage(gd, {
+              width: props.width ?? 400,
+              height: props.height ?? 400,
+              filename: props.exportName ?? "plot",
+              format: props.exportFormat ?? "svg",
+            });
+          },
+        },
+      ],
     });
   });
 
   createEffect(() => {
-    Plotly.newPlot(plotId, props.data, layout(), {
-      responsive: false,
-      displaylogo: false,
-      displayModeBar: true,
-      modeBarButtonsToAdd: [{
-        title: "SVG_EXPORT",
-        name: 'SVG_EXPORT',
-        icon: Plotly.Icons.camera,
-        click: function(gd) {
-          Plotly.downloadImage(gd, {
-            width: props.width ?? 400,
-            height: props.height ?? 400,
-            filename: props.exportName ?? "plot",
-            format: props.exportFormat ?? "svg",
-          })
-        }
-      }]
-    });
+    props.data;
+    let layout = { ...defaultLayout, ...props.layout, width: props.width, height: props.height };
+    if (updateTimer != null) {
+      clearTimeout(updateTimer);
+    }
+    updateTimer = setTimeout(() => {
+      Plotly.newPlot(plotId, props.data, layout, {
+        responsive: false,
+        displaylogo: false,
+        displayModeBar: true,
+        modeBarButtonsToAdd: [
+          {
+            title: "SVG_EXPORT",
+            name: "SVG_EXPORT",
+            icon: Plotly.Icons.camera,
+            click: function (gd) {
+              Plotly.downloadImage(gd, {
+                width: props.width ?? 400,
+                height: props.height ?? 400,
+                filename: props.exportName ?? "plot",
+                format: props.exportFormat ?? "svg",
+              });
+            },
+          },
+        ],
+      });
+    }, delay);
   });
 
-  return <><div id={plotId}></div>
-  </>;
+  return (
+    <>
+      <div id={plotId}></div>
+    </>
+  );
 }

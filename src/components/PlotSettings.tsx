@@ -13,6 +13,8 @@ import { IoTrashBinOutline } from "solid-icons/io";
 import { IconTypes } from "solid-icons";
 import { NoHydration } from "solid-js/web";
 import SelectInput from "./SelectInput";
+import { HexColorPicker } from "solid-colorful";
+import TextInput from "./TextInput";
 
 type PlotSettingsProps = {
   plot: UserPlot;
@@ -58,7 +60,9 @@ export default function PlotSettings({
 
   return (
     <div
-      class={`bg-white rounded-xl shadow-lg flex flex-col border-4 ${deleting() ? "translate-x-full" : "translate-x-0"} transition-transform`}
+      class={`bg-white rounded-xl shadow-lg flex flex-col border-4 ${
+        deleting() ? "translate-x-full" : "translate-x-0"
+      } transition-transform`}
       onClick={onClick}
       style={{
         "border-color": (subplotColors[plot.subplot ?? -1] ?? "#ffffff") + "55",
@@ -82,7 +86,10 @@ export default function PlotSettings({
           </NoHydration>
         </div>
         <Show when={open() && !(forceClose ?? (() => false))()}>
-          <div class="grid grid-cols-2 gap-x-4">
+          <div
+            class="grid grid-cols-2 gap-x-4"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div class="col-span-2 h-4" />
             <label class="mb-1 font-semibold" for="exportName">
               Type
@@ -117,6 +124,27 @@ export default function PlotSettings({
               options={plot.columns.map((x) => x.name)}
               onChange={(x) => updatePlot({ ...plot, yKey: x }, "yKey")}
             />
+            <div class="col-span-2 h-2" />
+            <label class="mb-1 font-semibold" for="colorText">
+              Color
+            </label>
+            <div />
+            <TextInput
+              id="colorText"
+              class="w-full"
+              value={plot.color}
+              onChange={(c) => updatePlot({ ...plot, color: c }, "color")}
+            />
+            <div class="col-span-2 h-2" />
+            <div class="col-span-2 flex flex-row items-center justify-center">
+              <HexColorPicker
+                color={plot.color}
+                onChange={(c) => {
+                  updatePlot({ ...plot, color: c }, "color");
+                }}
+              />
+            </div>
+            <div class="col-span-2 h-2" />
             <div class="col-span-2 h-8" />
             <div class="text-background cursor-pointer col-span-2 flex flex-row items-center gap-2 group">
               <div
@@ -124,9 +152,9 @@ export default function PlotSettings({
                 onClick={() => {
                   setDeleting(true);
                   setTimeout(() => {
-                  if (deletePlot) {
-                    deletePlot(plot.id);
-                  }
+                    if (deletePlot) {
+                      deletePlot(plot.id);
+                    }
                   }, 150);
                 }}
               >

@@ -48,3 +48,11 @@
     background-color: #29479477;
     border-radius: 999px;
 }
+
+div.react-colorful {
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+}

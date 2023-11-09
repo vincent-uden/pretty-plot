@@ -10,7 +10,6 @@ import ConfirmButton from "~/components/ConfirmButton";
 import { NoHydration } from "solid-js/web";
 import TextInput from "~/components/TextInput";
 import SelectInput from "~/components/SelectInput";
-import PlotSettings from "~/components/PlotSettings";
 import { unstable_clientOnly } from "solid-start";
 
 import Papa from "papaparse";
@@ -24,6 +23,9 @@ import { SlideInput } from "~/components/SlideInput.jsx";
 import TestSVG from "../test.svg";
 
 const Plot = unstable_clientOnly(() => import("../components/Plot"));
+const PlotSettings = unstable_clientOnly(
+  () => import("../components/PlotSettings"),
+);
 
 type OutputFormat = "SVG" | "PNG";
 
@@ -211,6 +213,77 @@ const defaultOps: UserPlotOptions = {
   yLabel: "",
 };
 
+function generateLayout(
+  plotOptions: UserPlotOptions,
+  subplots: number[],
+  spOptions: UserPlotOptions[],
+  options: { subplotMargin?: number },
+) {
+  let output: any = {
+    autosize: false,
+    title: {
+      text: plotOptions.title,
+    },
+    font: {
+      family: "Computer Modern",
+    },
+  };
+
+  if (subplots.length == 0) {
+    output["xaxis"] = {
+      title: {
+        text: plotOptions.xLabel,
+      },
+      showgrid: plotOptions.gridX,
+    };
+    output["yaxis"] = {
+      title: {
+        text: plotOptions.yLabel,
+      },
+      showgrid: plotOptions.gridY,
+    };
+
+    if (plotOptions.xLim != null) {
+      output["xaxis"]["range"] = plotOptions.xLim;
+    }
+    if (plotOptions.yLim != null) {
+      output["yaxis"]["range"] = plotOptions.yLim;
+    }
+  }
+
+  const margin = options.subplotMargin ?? 0.1;
+  const N = subplots.length;
+  const width = (1.0 - (N - 1) * margin) / N;
+
+  let j = 0;
+  for (const sp of subplots) {
+    output["xaxis" + sp] = {
+      domain: [
+        width * j + (j > 0 ? 1 : 0) * margin * j,
+        width * j + (j > 0 ? 1 : 0) * margin * j + width,
+      ],
+      anchor: "y" + sp,
+      range: (spOptions[j] ?? defaultOps).xLim,
+      title: {
+        text: (spOptions[j] ?? defaultOps).xLabel,
+      },
+      showgrid: (spOptions[j] ?? defaultOps).gridX,
+    };
+    output["yaxis" + sp] = {
+      domain: [0, 1.0],
+      anchor: "x" + sp,
+      range: (spOptions[j] ?? defaultOps).yLim,
+      title: {
+        text: (spOptions[j] ?? defaultOps).yLabel,
+      },
+      showgrid: (spOptions[j] ?? defaultOps).gridY,
+    };
+    j++;
+  }
+
+  return output;
+}
+
 export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [dataInput, setDataInput] = createSignal("");
@@ -223,7 +296,7 @@ export default function Home() {
 
   const [subplots, setSubplots] = createSignal<number[]>([]);
   const [paintingSubplot, setPaintingSubplot] = createSignal<number | null>(
-    null
+    null,
   );
   const [spOptIndex, setSPOptIndex] = createSignal<number | null>(null);
   const [spOptions, setSpOptions] = createSignal<UserPlotOptions[]>([]);
@@ -238,78 +311,12 @@ export default function Home() {
     setPlots(
       (x) => x.id == p.id,
       // @ts-ignore
-      produce((plot) => (plot[field] = p[field]))
+      produce((plot) => (plot[field] = p[field])),
     );
   }
 
   function deletePlot(plotId: number) {
-    setPlots(list => list.filter(p => p.id != plotId));
-  }
-
-  function generateLayout(options: { subplotMargin?: number }) {
-    let output: any = {
-      autosize: false,
-      title: {
-        text: plotOptions().title,
-      },
-      font: {
-        family: "Computer Modern",
-      },
-    };
-
-    if (subplots().length == 0) {
-      output["xaxis"] = {
-        title: {
-          text: plotOptions().xLabel,
-        },
-        showgrid: plotOptions().gridX,
-      };
-      output["yaxis"] = {
-        title: {
-          text: plotOptions().yLabel,
-        },
-        showgrid: plotOptions().gridY,
-      };
-
-      if (plotOptions().xLim != null) {
-        output["xaxis"]["range"] = plotOptions().xLim;
-      }
-      if (plotOptions().yLim != null) {
-        output["yaxis"]["range"] = plotOptions().yLim;
-      }
-    }
-
-    const margin = options.subplotMargin ?? 0.1;
-    const N = subplots().length;
-    const width = (1.0 - (N - 1) * margin) / N;
-
-    let j = 0;
-    for (const sp of subplots()) {
-      output["xaxis" + sp] = {
-        domain: [
-          width * j + (j > 0 ? 1 : 0) * margin * j,
-          width * j + (j > 0 ? 1 : 0) * margin * j + width,
-        ],
-        anchor: "y" + sp,
-        range: (spOptions()[j] ?? defaultOps).xLim,
-        title: {
-          text: (spOptions()[j] ?? defaultOps).xLabel,
-        },
-        showgrid: (spOptions()[j] ?? defaultOps).gridX,
-      };
-      output["yaxis" + sp] = {
-        domain: [0, 1.0],
-        anchor: "x" + sp,
-        range: (spOptions()[j] ?? defaultOps).yLim,
-        title: {
-          text: (spOptions()[j] ?? defaultOps).yLabel,
-        },
-        showgrid: (spOptions()[j] ?? defaultOps).gridY,
-      };
-      j++;
-    }
-
-    return output;
+    setPlots((list) => list.filter((p) => p.id != plotId));
   }
 
   function editPlotOption(key: keyof UserPlotOptions, value: any) {
@@ -337,6 +344,10 @@ export default function Home() {
         inlineMath: [["$", "$"]],
       },
     };
+  });
+
+  createEffect(() => {
+    console.log(plotOptions());
   });
 
   return (
@@ -461,6 +472,7 @@ export default function Home() {
               placeholder={"My Plot"}
               value={""}
               onChange={(x) => {
+                console.log(x);
                 setPlotOptions((po) => {
                   return { ...po, title: x };
                 });
@@ -511,7 +523,7 @@ export default function Home() {
               fallback={<p></p>}
               width={dimToPixels(plotOptions().width, plotOptions().dimUnit)}
               height={dimToPixels(plotOptions().height, plotOptions().dimUnit)}
-              layout={generateLayout({ subplotMargin: spMargin() })}
+              layout={generateLayout(plotOptions(), subplots(), spOptions(), { subplotMargin: spMargin() })}
               exportName={outputName()}
               exportFormat={outputFormat().toLowerCase() as any}
             />
@@ -1052,7 +1064,7 @@ export default function Home() {
                           x.subplot = len - 1;
                         }
                         return x;
-                      })
+                      }),
                     );
                     if (len - 1 == 0) {
                       setSPOptIndex(null);
@@ -1085,7 +1097,7 @@ export default function Home() {
             </Show>
           </div>
           <div class="h-4" />
-          <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
+          <div class="h-4 w-full rounded-full bg-accent-active shadow-lg"></div>
           <div class="flex flex-col h-[70vh] overflow-y-hidden">
             <div
               class={`absolute right-96 transition-opacity z-10 ${
@@ -1124,7 +1136,7 @@ export default function Home() {
                       if (paintingSubplot() != null) {
                         updatePlot(
                           { ...plot, subplot: paintingSubplot() },
-                          "subplot"
+                          "subplot",
                         );
                       }
                     }}
@@ -1134,7 +1146,6 @@ export default function Home() {
               )}
             />
           </div>
-          <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg" />
         </aside>
       </div>
     </main>

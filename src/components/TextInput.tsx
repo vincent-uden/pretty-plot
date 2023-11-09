@@ -11,6 +11,8 @@ type TextInputProps = {
 };
 
 export default function TextInput(props: TextInputProps) {
+  let inputRef: HTMLInputElement | undefined;
+
   return (
     <input
       class={twMerge(
@@ -18,15 +20,38 @@ export default function TextInput(props: TextInputProps) {
         props.class,
       )}
       id={props.id ?? ""}
+      ref={inputRef}
       type="text"
       placeholder={props.placeholder ?? ""}
       value={props.value ?? ""}
-      onChange={(e) => {
-        if (props.onChange) {
-          props.onChange(e.target.value);
-        }
-        if (props.out) {
-          props.out(e.target.value);
+      onKeyPress={(e) => {
+        if (
+          ![
+            "Enter",
+            "Shift",
+            "Control",
+            "Alt",
+            "AltGraph",
+            "CapsLock",
+            "Fn",
+            "FnLock",
+            "Hyper",
+            "Meta",
+            "NumLock",
+            "ScrollLock",
+            "Super",
+            "Symbol",
+            "SymbolLock",
+            "Dead",
+            "Tab",
+          ].includes(e.key.toLowerCase())
+        ) {
+          if (props.onChange) {
+            props.onChange((inputRef?.value ?? "") + e.key);
+          }
+          if (props.out) {
+            props.out((inputRef?.value ?? "") + e.key);
+          }
         }
       }}
     />
