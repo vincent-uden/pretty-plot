@@ -242,6 +242,10 @@ export default function Home() {
     );
   }
 
+  function deletePlot(plotId: number) {
+    setPlots(list => list.filter(p => p.id != plotId));
+  }
+
   function generateLayout(options: { subplotMargin?: number }) {
     let output: any = {
       autosize: false,
@@ -1082,9 +1086,9 @@ export default function Home() {
           </div>
           <div class="h-4" />
           <div class="h-4 w-full rounded-full bg-primary scale-x-110 shadow-lg"></div>
-          <div class="flex flex-col gap-4 h-[70vh] overflow-y-scroll py-4">
+          <div class="flex flex-col h-[70vh] overflow-y-hidden">
             <div
-              class={`absolute right-72 transition-opacity ${
+              class={`absolute right-96 transition-opacity z-10 ${
                 helpVisible() ? "opacity-100" : "opacity-0"
               }`}
             >
@@ -1093,7 +1097,7 @@ export default function Home() {
                 on an entry to edit it's individual settings.
               </p>
               <img
-                class="w-16 h-auto rotate-[-145deg] translate-y-28 translate-x-16"
+                class="w-16 h-auto rotate-[-165deg] translate-y-28 translate-x-32"
                 src={TestSVG}
               />
             </div>
@@ -1115,6 +1119,7 @@ export default function Home() {
                     index={i}
                     headerClickable={() => paintingSubplot() == null}
                     forceClose={dragging}
+                    deletePlot={deletePlot}
                     onClick={() => {
                       if (paintingSubplot() != null) {
                         updatePlot(

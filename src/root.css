@@ -33,3 +33,18 @@
     font-family: "Milku";
     src: url("/Milku.otf");
 }
+
+.custom-scroll {
+    padding-left: 16px;
+    padding-right: 8px;
+    scrollbar-gutter: stable;
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #29479477;
+    border-radius: 999px;
+}
