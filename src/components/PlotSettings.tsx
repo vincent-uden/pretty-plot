@@ -91,6 +91,13 @@ export default function PlotSettings({
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div class="col-span-2 h-4" />
+            <div class="col-span-2">
+              <label class="mb-1 font-semibold" for={`plotName-${plot.id}`}>
+                Type
+              </label>
+              <TextInput id={`plotName-${plot.id}`} class="w-full" placeholder={plot.name} onChange={(x) => updatePlot({...plot, name: x}, "name")} />
+            </div>
+            <div class="col-span-2 h-4" />
             <label class="mb-1 font-semibold" for="exportName">
               Type
             </label>

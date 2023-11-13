@@ -86,6 +86,7 @@ export type UserPlotOptions = {
   yLim: Array<number | null> | null;
   xLabel: string;
   yLabel: string;
+  showLegend: boolean;
 };
 
 function userToPlotly(plot: UserPlot) {
@@ -95,6 +96,7 @@ function userToPlotly(plot: UserPlot) {
     type: plot.type,
     mode: "",
     color: plot.color,
+    name: plot.name,
     xaxis: "x",
     yaxis: "y",
   };
@@ -213,6 +215,7 @@ const defaultOps: UserPlotOptions = {
   yLim: null,
   xLabel: "",
   yLabel: "",
+  showLegend: true,
 };
 
 function generateLayout(
@@ -229,6 +232,7 @@ function generateLayout(
     font: {
       family: "Computer Modern",
     },
+    showlegend: plotOptions.showLegend,
   };
 
   if (subplots.length == 0) {
@@ -529,6 +533,10 @@ export default function Home() {
                 })
               }
             />
+            <div class="flex flex-row gap-8 mt-2">
+              <label class="grow font-semibold" for="showLegend" >Show Legend</label>
+              <input type="checkbox" id="showLegend" onChange={(e) => setPlotOptions((po) => {return {...po, showLegend: !po.showLegend}})} />
+            </div>
           </div>
         </aside>
         <div class="grow">
@@ -538,7 +546,9 @@ export default function Home() {
               fallback={<p></p>}
               width={dimToPixels(plotOptions().width, plotOptions().dimUnit)}
               height={dimToPixels(plotOptions().height, plotOptions().dimUnit)}
-              layout={generateLayout(plotOptions(), subplots(), spOptions(), { subplotMargin: spMargin() })}
+              layout={generateLayout(plotOptions(), subplots(), spOptions(), {
+                subplotMargin: spMargin(),
+              })}
               exportName={outputName()}
               exportFormat={outputFormat().toLowerCase() as any}
             />
