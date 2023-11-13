@@ -215,7 +215,7 @@ const defaultOps: UserPlotOptions = {
   yLim: null,
   xLabel: "",
   yLabel: "",
-  showLegend: true,
+  showLegend: false,
 };
 
 function generateLayout(
