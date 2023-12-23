@@ -1,0 +1,92 @@
+{
+  "\u0000virtual:#vinxi/handler/ssr.css": {
+    "file": "assets/ssr-c38360a3.css",
+    "src": "\u0000virtual:#vinxi/handler/ssr.css"
+  },
+  "_components-ba74977f.js": {
+    "file": "assets/components-ba74977f.js",
+    "imports": [
+      "_routing-55868e8f.js"
+    ]
+  },
+  "_routes-e443b999.js": {
+    "dynamicImports": [
+      "src/routes/about.tsx?pick=default&pick=$css",
+      "src/routes/about.tsx?pick=default&pick=$css",
+      "src/routes/index.tsx?pick=default&pick=$css",
+      "src/routes/index.tsx?pick=default&pick=$css",
+      "src/routes/[...404].tsx?pick=default&pick=$css",
+      "src/routes/[...404].tsx?pick=default&pick=$css"
+    ],
+    "file": "assets/routes-e443b999.js"
+  },
+  "_routing-55868e8f.js": {
+    "file": "assets/routing-55868e8f.js"
+  },
+  "src/components/Plot.tsx": {
+    "file": "assets/Plot-bc29cc8e.js",
+    "isDynamicEntry": true,
+    "src": "src/components/Plot.tsx"
+  },
+  "src/components/PlotSettings.tsx": {
+    "file": "assets/PlotSettings-721a1c20.js",
+    "imports": [
+      "src/routes/index.tsx?pick=default&pick=$css",
+      "_routes-e443b999.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/components/PlotSettings.tsx"
+  },
+  "src/routes/[...404].tsx?pick=default&pick=$css": {
+    "file": "_...404_.js",
+    "imports": [
+      "_components-ba74977f.js",
+      "_routing-55868e8f.js"
+    ],
+    "isDynamicEntry": true,
+    "isEntry": true,
+    "src": "src/routes/[...404].tsx?pick=default&pick=$css"
+  },
+  "src/routes/about.tsx?pick=default&pick=$css": {
+    "file": "about.js",
+    "imports": [
+      "_components-ba74977f.js",
+      "_routing-55868e8f.js"
+    ],
+    "isDynamicEntry": true,
+    "isEntry": true,
+    "src": "src/routes/about.tsx?pick=default&pick=$css"
+  },
+  "src/routes/index.tsx?pick=default&pick=$css": {
+    "assets": [
+      "assets/test-bfa23dcf.svg"
+    ],
+    "dynamicImports": [
+      "src/components/Plot.tsx",
+      "src/components/PlotSettings.tsx"
+    ],
+    "file": "index.js",
+    "imports": [
+      "_routes-e443b999.js"
+    ],
+    "isDynamicEntry": true,
+    "isEntry": true,
+    "src": "src/routes/index.tsx?pick=default&pick=$css"
+  },
+  "src/test.svg": {
+    "file": "assets/test-bfa23dcf.svg",
+    "src": "src/test.svg"
+  },
+  "virtual:#vinxi/handler/ssr": {
+    "css": [
+      "assets/ssr-c38360a3.css"
+    ],
+    "file": "ssr.js",
+    "imports": [
+      "_routes-e443b999.js",
+      "_routing-55868e8f.js"
+    ],
+    "isEntry": true,
+    "src": "virtual:#vinxi/handler/ssr"
+  }
+}
