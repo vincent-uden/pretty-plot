@@ -14,6 +14,7 @@
     "@types/node": "^20.10.5",
     "@types/papaparse": "^5.3.14",
     "autoprefixer": "^10.4.14",
+    "colortranslator": "^4.1.0",
     "lodash-es": "^4.17.21",
     "mathjax": "^3.2.2",
     "papaparse": "^5.4.1",

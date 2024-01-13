@@ -14,7 +14,7 @@ import { IconTypes } from "solid-icons";
 import { NoHydration } from "solid-js/web";
 import SelectInput from "./SelectInput";
 import TextInput from "./TextInput";
-import { SketchPicker } from "solid-color";
+import { ColorPicker } from "./ColorPicker";
 
 type PlotSettingsProps = {
   plot: UserPlot;
@@ -160,6 +160,7 @@ export default function PlotSettings({
                 onSwatchHover={() => {}}
               />
               */}
+              <ColorPicker out={(c: string) => { updatePlot({...plot, color: c}, "color")}} value={plot.color} />
             </div>
             <div class="col-span-2 h-2" />
             <div class="col-span-2 h-8" />
