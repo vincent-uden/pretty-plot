@@ -1,5 +1,5 @@
-// @ts-ignore
-import { createHandler, StartServer } from "@solidjs/start/server";
+import { StartServer } from "@solidjs/start/server";
+import { createHandler } from "@solidjs/start/entry";
 
 export default createHandler(() => (
   <StartServer

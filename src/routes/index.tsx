@@ -11,8 +11,6 @@ import { NoHydration } from "solid-js/web";
 import TextInput from "~/components/TextInput";
 import SelectInput from "~/components/SelectInput";
 
-// TODO: Switch out papaparse for something Rollup likes better
-import Papa from "papaparse";
 import { createStore, produce } from "solid-js/store";
 import { DraggableList } from "~/components/DraggableList";
 
@@ -155,6 +153,39 @@ function userToPlotly(plot: UserPlot) {
   return trace;
 }
 
+type CsvData = {
+  headers: string[];
+  rows: Record<string, string|number|undefined>[];
+};
+
+function parseCsv(csvStr: string): CsvData {
+  let out: CsvData = {
+    headers: [],
+    rows: [],
+  };
+
+  const testRows = csvStr.split("\n");
+  let r = testRows[0];
+  const cells = r.split(",");
+  for (const c of cells) {
+    out.headers.push(c);
+  }
+  for (let i = 1; i < testRows.length; i++) {
+    let r = testRows[i];
+    const cells = r.split(",");
+    let row = {};
+
+    for (let j = 0; j < out.headers.length; j++) {
+      //@ts-ignore
+      row[out.headers[j]] = cells[j];
+    }
+
+    out.rows.push(row);
+  }
+
+  return out;
+}
+
 function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
   let output: UserPlot = {
     name,
@@ -167,17 +198,15 @@ function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
     subplot: null,
   };
 
-  const csv = Papa.parse(csvStr, {
-    header: true,
-  });
+  const csv = parseCsv(csvStr);
 
-  for (const header of csv.meta.fields ?? []) {
+  for (const header of csv.headers) {
     let col: PlotColumn = {
       name: header,
       data: [],
     };
 
-    for (const row of csv.data) {
+    for (const row of csv.rows) {
       // @ts-ignore
       col.data.push(row[header]);
     }
@@ -360,10 +389,6 @@ function generateLayout(
         inlineMath: [["$", "$"]],
       },
     };
-  });
-
-  createEffect(() => {
-    console.log(plotOptions());
   });
 
   const subplotColors2 = subplotColors;
