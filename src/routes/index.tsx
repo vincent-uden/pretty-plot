@@ -1,4 +1,6 @@
-import { createEffect, createSignal, For, onMount, Show } from "solid-js";
+import { For, Setter, Show, createSignal } from "solid-js";
+import { SetStoreFunction, produce } from "solid-js/store";
+
 import { TbFileExport } from "solid-icons/tb";
 import { IoAddCircle, IoRemoveCircle } from "solid-icons/io";
 import { ImCross } from "solid-icons/im";
@@ -6,17 +8,14 @@ import { FaSolidArrowRightLong } from "solid-icons/fa";
 import { FaSolidQuestion } from "solid-icons/fa";
 import { IoClose } from "solid-icons/io";
 
+import TestSvg from "../test.svg";
 import ConfirmButton from "~/components/ConfirmButton";
-import { NoHydration } from "solid-js/web";
+import { UserPlot, UserPlotOptions, csvToPlot, defaultOps, dimToPixels, generateLayout, userToPlotly } from "~/plotting";
+import { createStore } from "solid-js/store";
 import TextInput from "~/components/TextInput";
 import SelectInput from "~/components/SelectInput";
-
-import { createStore, produce } from "solid-js/store";
+import { SlideInput } from "~/components/SlideInput";
 import { DraggableList } from "~/components/DraggableList";
-
-import { SlideInput } from "~/components/SlideInput.jsx";
-
-import TestSVG from "../test.svg";
 import { clientOnly } from "@solidjs/start";
 
 const Plot = clientOnly(() => import("../components/Plot"));
@@ -24,44 +23,6 @@ const PlotSettings = clientOnly(
   () => import("../components/PlotSettings"),
 );
 
-type OutputFormat = "SVG" | "PNG";
-
-
-
-export type PlotColumn = {
-  name: string;
-  data: number[];
-};
-
-export type UserPlotType = "bar" | "scatter" | "line" | "pie";
-
-export type UserPlot = {
-  name: string;
-  color: string;
-  xKey: string;
-  yKey: string;
-  columns: PlotColumn[];
-  type: UserPlotType;
-  id: number;
-  subplot: number | null;
-};
-
-export type UserPlotOptions = {
-  title: string;
-  gridX: boolean;
-  gridY: boolean;
-  width: number;
-  height: number;
-  dimUnit: "Inches" | "Pixels" | "Centimeters";
-  xLim: Array<number | null> | null;
-  yLim: Array<number | null> | null;
-  xLabel: string;
-  yLabel: string;
-  showLegend: boolean;
-};
-
-
-export default function Home() {
 const standardColors = [
   "#1f77b4",
   "#ff7f0e",
@@ -88,247 +49,22 @@ const subplotColors = [
   "#17becf",
 ];
 
-function userToPlotly(plot: UserPlot) {
-  let trace: any = {
-    x: [],
-    y: [],
-    type: plot.type,
-    mode: "",
-    color: plot.color,
-    name: plot.name,
-    xaxis: "x",
-    yaxis: "y",
-  };
-  if (plot.type == "line") {
-    trace.type = "scatter";
-    trace.mode = "lines";
-    trace.line = {
-      color: plot.color,
-    };
-  } else if (plot.type == "scatter") {
-    trace.type = "scatter";
-    trace.mode = "markers";
-  }
-  if (plot.type != "line") {
-    trace.marker = {
-      color: plot.color,
-    };
-  }
-
-  let xCol: PlotColumn | undefined = undefined;
-  for (const col of plot.columns) {
-    if (col.name == plot.xKey) {
-      xCol = col;
-    }
-  }
-
-  let yCol: PlotColumn | undefined = undefined;
-  for (const col of plot.columns) {
-    if (col.name == plot.yKey) {
-      yCol = col;
-    }
-  }
-
-  if (yCol !== undefined && xCol === undefined) {
-    xCol = {
-      name: "Range",
-      data: [] as number[],
-    };
-    for (let i = 0; i < yCol.data.length; i++) {
-      xCol.data.push(i);
-    }
-  }
-
-  if (yCol != undefined && xCol != undefined) {
-    trace.x = xCol.data as never[];
-    trace.y = yCol.data as never[];
-  }
-
-  if (plot.subplot && plot.subplot > 0) {
-    trace.xaxis += plot.subplot;
-    trace.yaxis += plot.subplot;
-  }
-
-  // @ts-ignore
-  return trace;
-}
-
-type CsvData = {
-  headers: string[];
-  rows: Record<string, string|number|undefined>[];
-};
-
-function parseCsv(csvStr: string): CsvData {
-  let out: CsvData = {
-    headers: [],
-    rows: [],
-  };
-
-  const testRows = csvStr.split("\n");
-  let r = testRows[0];
-  const cells = r.split(",");
-  for (const c of cells) {
-    out.headers.push(c);
-  }
-  for (let i = 1; i < testRows.length; i++) {
-    let r = testRows[i];
-    const cells = r.split(",");
-    let row = {};
-
-    for (let j = 0; j < out.headers.length; j++) {
-      //@ts-ignore
-      row[out.headers[j]] = cells[j];
-    }
-
-    out.rows.push(row);
-  }
-
-  return out;
-}
-
-function csvToPlot(csvStr: string, name: string, index: number): UserPlot {
-  let output: UserPlot = {
-    name,
-    color: standardColors[index % standardColors.length],
-    xKey: "",
-    yKey: "",
-    columns: [],
-    type: "scatter",
-    id: new Date().getMilliseconds(),
-    subplot: null,
-  };
-
-  const csv = parseCsv(csvStr);
-
-  for (const header of csv.headers) {
-    let col: PlotColumn = {
-      name: header,
-      data: [],
-    };
-
-    for (const row of csv.rows) {
-      // @ts-ignore
-      col.data.push(row[header]);
-    }
-
-    output.columns.push(col);
-  }
-
-  if (output.columns.length > 0) {
-    output.yKey = output.columns[0].name;
-  }
-
-  return output;
-}
-
-function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
-  if (unit == "Inches") {
-    return x * 100;
-  }
-  if (unit == "Centimeters") {
-    return (x / 2.54) * 100;
-  }
-  return x;
-}
+type OutputFormat = "SVG" | "PNG";
 
 function maxMargin(n: number) {
   return 1 / Math.max(n - 1, 1);
 }
 
-const defaultOps: UserPlotOptions = {
-  title: "",
-  gridX: true,
-  gridY: true,
-  width: 6,
-  height: 4,
-  dimUnit: "Inches",
-  xLim: null,
-  yLim: null,
-  xLabel: "",
-  yLabel: "",
-  showLegend: false,
-};
-
-function generateLayout(
-  plotOptions: UserPlotOptions,
-  subplots: number[],
-  spOptions: UserPlotOptions[],
-  options: { subplotMargin?: number },
-) {
-  let output: any = {
-    autosize: false,
-    title: {
-      text: plotOptions.title,
-    },
-    font: {
-      family: "Computer Modern",
-    },
-    showlegend: plotOptions.showLegend,
-  };
-
-  if (subplots.length == 0) {
-    output["xaxis"] = {
-      title: {
-        text: plotOptions.xLabel,
-      },
-      showgrid: plotOptions.gridX,
-    };
-    output["yaxis"] = {
-      title: {
-        text: plotOptions.yLabel,
-      },
-      showgrid: plotOptions.gridY,
-    };
-
-    if (plotOptions.xLim != null) {
-      output["xaxis"]["range"] = plotOptions.xLim;
-    }
-    if (plotOptions.yLim != null) {
-      output["yaxis"]["range"] = plotOptions.yLim;
-    }
-  }
-
-  const margin = options.subplotMargin ?? 0.1;
-  const N = subplots.length;
-  const width = (1.0 - (N - 1) * margin) / N;
-
-  let j = 0;
-  for (const sp of subplots) {
-    output["xaxis" + sp] = {
-      domain: [
-        width * j + (j > 0 ? 1 : 0) * margin * j,
-        width * j + (j > 0 ? 1 : 0) * margin * j + width,
-      ],
-      anchor: "y" + sp,
-      range: (spOptions[j] ?? defaultOps).xLim,
-      title: {
-        text: (spOptions[j] ?? defaultOps).xLabel,
-      },
-      showgrid: (spOptions[j] ?? defaultOps).gridX,
-    };
-    output["yaxis" + sp] = {
-      domain: [0, 1.0],
-      anchor: "x" + sp,
-      range: (spOptions[j] ?? defaultOps).yLim,
-      title: {
-        text: (spOptions[j] ?? defaultOps).yLabel,
-      },
-      showgrid: (spOptions[j] ?? defaultOps).gridY,
-    };
-    j++;
-  }
-
-  return output;
-}
-
+export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
+  const [helpVisible, setHelpVisible] = createSignal(false);
   const [dataInput, setDataInput] = createSignal("");
-  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({
-    ...defaultOps,
-  });
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("SVG");
+  const [plotOptions, setPlotOptions] = createSignal<UserPlotOptions>({
+    ...defaultOps,
+  });
 
   const [subplots, setSubplots] = createSignal<number[]>([]);
   const [paintingSubplot, setPaintingSubplot] = createSignal<number | null>(
@@ -336,12 +72,18 @@ function generateLayout(
   );
   const [spOptIndex, setSPOptIndex] = createSignal<number | null>(null);
   const [spOptions, setSpOptions] = createSignal<UserPlotOptions[]>([]);
-
   const [spMargin, setSPMargin] = createSignal<number>(0.1);
 
   const [dragging, setDragging] = createSignal<boolean>(false);
 
-  const [helpVisible, setHelpVisible] = createSignal(false);
+  async function loadDroppedFile(e: DragEvent) {
+    const file = e.dataTransfer?.files[0];
+    e.preventDefault();
+    const contents = await file?.text();
+    if (contents != null) {
+      setDataInput(contents);
+    }
+  }
 
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
@@ -373,26 +115,6 @@ function generateLayout(
     }
   }
 
-  async function fileDropHandler(e: DragEvent) {
-    const file = e.dataTransfer?.files[0];
-    e.preventDefault();
-    const contents = await file?.text();
-    if (contents != null) {
-      setDataInput(contents);
-    }
-  }
-
-  onMount(() => {
-    // @ts-ignore
-    window["MathJax"] = {
-      tex: {
-        inlineMath: [["$", "$"]],
-      },
-    };
-  });
-
-  const subplotColors2 = subplotColors;
-
   return (
     <main class="mx-auto text-gray-700 p-4">
       <div class="flex flex-row items-center mb-4">
@@ -411,94 +133,40 @@ function generateLayout(
               helpVisible() ? "-translate-y-48" : "translate-y-0"
             } transition-transform`}
           >
-            <NoHydration>
-              <FaSolidQuestion size={32} />
-            </NoHydration>
+            <FaSolidQuestion size={32} />
           </div>
           <div
             class={`absolute left-[8.5px] top-[8.5px] scale-125 ${
               helpVisible() ? "translate-x-0" : "translate-x-48"
             } transition-transform`}
           >
-            <NoHydration>
-              <IoClose size={32} />
-            </NoHydration>
+            <IoClose size={32} />
           </div>
         </div>
       </div>
       <div class="flex flex-row gap-8">
+
+        {/* Left Panel */}
         <aside class="flex flex-col grow-0 basis-64 relative">
-          <textarea
-            id="csvDropZone"
-            onDrop={fileDropHandler}
-            class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none"
-            placeholder="Paste your data here (csv, json)"
-            value={dataInput()}
-            onChange={(e) => setDataInput(e.target.value)}
-          >
-            {""}
-          </textarea>
-          <div
-            class={`absolute left-48 translate-x-10 transition-opacity ${
-              helpVisible() ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
-              Enter your data in this box by copy-paste or drag-and-drop an
-              entire file.
-            </p>
-            <img
-              class="w-16 h-auto rotate-[-15deg] translate-y-4"
-              src={TestSVG}
-            />
-          </div>
-          <div class="h-4" />
-          <ConfirmButton
-            onClick={() => {
-              setPlots((x) => [
-                ...x,
-                csvToPlot(dataInput(), "New Plot", x.length),
-              ]);
-            }}
-          >
-            Add Plot
-          </ConfirmButton>
+          <FileDropper
+            onDrop={loadDroppedFile}
+            helpVisible={helpVisible()}
+            dataInput={dataInput()}
+            setDataInput={setDataInput}
+            setPlots={setPlots}
+          />
           <div class="h-8" />
-          <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
-            <div class="flex flex-row gap-4 mb-4">
-              <h2 class="grow text-primary text-xl">Export Options</h2>
-              <NoHydration>
-                <TbFileExport class="grow-0 text-primary" size={24} />
-              </NoHydration>
-            </div>
-            <label class="mb-1 font-semibold" for="exportName">
-              File Name
-            </label>
-            <TextInput
-              id="exportName"
-              class="font-mono text-primary w-full"
-              value="plot"
-              out={setOutputName}
-            />
-            <div class="h-2" />
-            <label class="mb-1 font-semibold" for="exportFormat">
-              Format
-            </label>
-            <SelectInput
-              id="exportFormat"
-              class="font-mono text-primary"
-              out={setOutputFormat}
-              options={["SVG", "PNG"] as OutputFormat[]}
-            />
-          </div>
+          <ExportOptions
+            setOutputName={setOutputName}
+            setOutputFormat={setOutputFormat}
+          />
           <div class="h-4" />
           <ConfirmButton
             onClick={() => {
               let allBtns = document.getElementsByClassName("modebar-btn");
               for (const btn of allBtns) {
                 if (btn.getAttribute("data-title")?.startsWith("SVG_EXPORT")) {
-                  // @ts-ignore
-                  btn.click();
+                  (btn as HTMLButtonElement).click();
                 }
               }
             }}
@@ -506,66 +174,10 @@ function generateLayout(
             Download
           </ConfirmButton>
           <div class="h-8" />
-          <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
-            <h2 class="grow text-primary text-xl">Plot Options</h2>
-            <div class="h-4" />
-            <label class="mb-1 font-semibold" for="plotTitle">
-              Title
-            </label>
-            <TextInput
-              id="plotTitle"
-              class="text-primary pb-1 outline-none w-full"
-              placeholder={"My Plot"}
-              value={""}
-              onChange={(x) => {
-                console.log(x);
-                setPlotOptions((po) => {
-                  return { ...po, title: x };
-                });
-              }}
-            />
-            <div class="h-2" />
-            <label class="mb-1 font-semibold">Dimensions</label>
-            <div class="flex flex-row items-center gap-2">
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                value={"6"}
-                onChange={(x) => {
-                  setPlotOptions((po) => {
-                    return { ...po, width: parseInt(x, 0) };
-                  });
-                }}
-              />
-              <NoHydration>
-                <ImCross class="text-accent" />
-              </NoHydration>
-              <TextInput
-                class="text-primary pb-1 outline-none grow"
-                value={"4"}
-                onChange={(x) => {
-                  setPlotOptions((po) => {
-                    return { ...po, height: parseInt(x, 0) };
-                  });
-                }}
-              />
-            </div>
-            <div class="h-2" />
-            <SelectInput
-              class="text-primary pb-1 outline-none"
-              options={["Inches", "Pixels", "Centimeters"]}
-              onChange={(x) =>
-                //@ts-ignore
-                setPlotOptions((po) => {
-                  return { ...po, dimUnit: x };
-                })
-              }
-            />
-            <div class="flex flex-row gap-8 mt-2">
-              <label class="grow font-semibold" for="showLegend" >Show Legend</label>
-              <input type="checkbox" id="showLegend" onChange={(e) => setPlotOptions((po) => {return {...po, showLegend: !po.showLegend}})} />
-            </div>
-          </div>
+          <GlobalPlotOptions setPlotOptions={setPlotOptions} />
         </aside>
+
+        {/* Central Panel */}
         <div class="grow">
           <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col items-center">
             <Plot
@@ -599,16 +211,17 @@ function generateLayout(
                     </p>
                     <div
                       class="w-8 h-8 rounded-full opacity-70"
-                      style={{ "background-color": subplotColors2[sp] }}
+                      style={{ "background-color": subplotColors[sp] }}
                     />
                   </div>
                 );
               }}
             </For>
           </div>
+
           {/* Plot options / Subplot options if there are multiple subplots */}
           <For each={subplots()}>
-            {(x, i) => (
+            {(_, i) => (
               <div
                 class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${
                   i() == spOptIndex() ? "" : "hidden"
@@ -670,9 +283,7 @@ function generateLayout(
                       }
                     }}
                   />
-                  <NoHydration>
-                    <FaSolidArrowRightLong class="text-accent" />
-                  </NoHydration>
+                  <FaSolidArrowRightLong class="text-accent" />
                   <TextInput
                     class="text-primary pb-1 outline-none grow"
                     placeholder={"Auto"}
@@ -767,9 +378,7 @@ function generateLayout(
                       }
                     }}
                   />
-                  <NoHydration>
-                    <FaSolidArrowRightLong class="text-accent" />
-                  </NoHydration>
+                  <FaSolidArrowRightLong class="text-accent" />
                   <TextInput
                     class="text-primary pb-1 outline-none grow"
                     placeholder={"Auto"}
@@ -886,9 +495,7 @@ function generateLayout(
                   }
                 }}
               />
-              <NoHydration>
-                <FaSolidArrowRightLong class="text-accent" />
-              </NoHydration>
+              <FaSolidArrowRightLong class="text-accent" />
               <TextInput
                 class="text-primary pb-1 outline-none grow"
                 placeholder={"Auto"}
@@ -983,9 +590,7 @@ function generateLayout(
                   }
                 }}
               />
-              <NoHydration>
-                <FaSolidArrowRightLong class="text-accent" />
-              </NoHydration>
+              <FaSolidArrowRightLong class="text-accent" />
               <TextInput
                 class="text-primary pb-1 outline-none grow"
                 placeholder={"Auto"}
@@ -1039,116 +644,22 @@ function generateLayout(
             />
           </div>
         </div>
+
+        {/* Right Panel */}
         <aside class="basis-64">
-          <div class="relative bg-white rounded-xl p-4 shadow-lg">
-            <div
-              class={`absolute right-96 transition-opacity -translate-y-16 ${
-                helpVisible() ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <p class="absolute w-48 font-hand text-red-600 text-center">
-                Create subplots by adding them here. Then select a category
-                (indicated by a color) and "paint" each plot below to group them
-                into the correct subplot.
-              </p>
-              <div class="w-16 h-16 translate-x-48 -scale-x-100 rotate-45">
-                <img class="w-16 h-16 " src={TestSVG} />
-              </div>
-            </div>
-            <p class="mb-2 text-primary text-xl">Subplots</p>
-            <div class="flex flex-row flex-wrap gap-2">
-              <For each={subplots()}>
-                {(sp) => (
-                  <div
-                    class={`rounded-full  w-8 h-8 hover:opacity-50 transition-opacity cursor-pointer ${
-                      paintingSubplot() == sp
-                        ? "border-2 border-green-500 opacity-50"
-                        : "opacity-20"
-                    }`}
-                    style={{ "background-color": standardColors[sp] }}
-                    onClick={() => {
-                      if (paintingSubplot() == sp) {
-                        setPaintingSubplot(null);
-                      } else {
-                        setPaintingSubplot(sp);
-                      }
-                    }}
-                  />
-                )}
-              </For>
-              <div
-                class={`w-8 h-8 ${
-                  paintingSubplot() != null ? "rotate-[45deg]" : ""
-                } transition-transform`}
-                onClick={() => {
-                  if (paintingSubplot() == null) {
-                    setSubplots((x) => [...x, x.length + 1]);
-                    setSpOptions((x) => [...x, { ...defaultOps }]);
-                    if (spOptIndex() == null) {
-                      setSPOptIndex(0);
-                    }
-                  } else {
-                    setPaintingSubplot(null);
-                  }
-                }}
-              >
-                <NoHydration>
-                  <IoAddCircle
-                    class="text-primary cursor-pointer opacity-50 hover:opacity-100 transition-opacity w-8 h-8 scale-[1.2]"
-                    size={48}
-                  />
-                </NoHydration>
-              </div>
-              <Show when={subplots().length > 0}>
-                <div
-                  class="w-8 h-8"
-                  onClick={() => {
-                    const len = subplots().length;
-                    setSubplots((x) => x.slice(0, x.length - 1));
-                    setSpOptions((x) => x.slice(0, x.length - 1));
-                    setSPOptIndex((x) => Math.min(x!!, len - 2));
-                    setPlots(
-                      (x) => (x.subplot != null && x.subplot >= len) ?? false,
-                      produce((x) => {
-                        if (len == 1) {
-                          x.subplot = null;
-                        } else {
-                          x.subplot = len - 1;
-                        }
-                        return x;
-                      }),
-                    );
-                    if (len - 1 == 0) {
-                      setSPOptIndex(null);
-                    }
-                    setPaintingSubplot(null);
-                  }}
-                >
-                  <NoHydration>
-                    <IoRemoveCircle
-                      class="text-red-400 cursor-pointer opacity-50 hover:opacity-100 transition-opacity w-8 h-8 scale-[1.2]"
-                      size={48}
-                    />
-                  </NoHydration>
-                </div>
-              </Show>
-            </div>
-            <Show when={subplots().length > 0}>
-              <div class="h-4" />
-              <p class="text-body text-lg">Margin</p>
-              <div class="h-2" />
-              <div class="px-4">
-                <SlideInput
-                  from={0.0}
-                  to={maxMargin(subplots().length)}
-                  out={setSPMargin}
-                  value={0.0}
-                />
-              </div>
-              <div class="h-8" />
-            </Show>
-          </div>
           <div class="h-4" />
+          <GlobalSubPlotOptions
+            helpVisible={helpVisible()}
+            paintingSubplot={paintingSubplot()}
+            setPaintingSubplot={setPaintingSubplot}
+            subplots={subplots()}
+            setSubplots={setSubplots}
+            setSpOptions={setSpOptions}
+            spOptIndex={spOptIndex()}
+            setSPOptIndex={setSPOptIndex}
+            setPlots={setPlots}
+            setSPMargin={setSPMargin}
+          />
           <div class="h-4 w-full rounded-full bg-accent-active shadow-lg"></div>
           <div class="flex flex-col h-[70vh] overflow-y-hidden">
             <div
@@ -1162,7 +673,7 @@ function generateLayout(
               </p>
               <img
                 class="w-16 h-auto rotate-[-165deg] translate-y-28 translate-x-32"
-                src={TestSVG}
+                src={TestSvg}
               />
             </div>
             <DraggableList
@@ -1201,5 +712,288 @@ function generateLayout(
         </aside>
       </div>
     </main>
+  );
+}
+
+type FileDropperProps = {
+  onDrop: (e: DragEvent) => Promise<void>;
+  helpVisible: boolean;
+  setPlots: Setter<UserPlot[]>;
+  dataInput: string;
+  setDataInput: Setter<string>;
+};
+
+function FileDropper(props: FileDropperProps) {
+  return (
+    <>
+      <textarea
+        id="csvDropZone"
+        onDrop={props.onDrop} // TODO: fileDropHandler
+        class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none"
+        placeholder="Paste your data here (csv, json)"
+        value={props.dataInput}
+        onChange={(e) => props.setDataInput(e.target.value)}
+      >
+        {""}
+      </textarea>
+      <div
+        class={`absolute left-48 translate-x-10 transition-opacity ${
+          props.helpVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
+          Enter your data in this box by copy-paste or drag-and-drop an entire
+          file.
+        </p>
+        <img class="w-16 h-auto rotate-[-15deg] translate-y-4" src={TestSvg} />
+      </div>
+      <div class="h-4" />
+      <ConfirmButton
+        onClick={() => {
+          props.setPlots((x) => [
+            ...x,
+            csvToPlot(
+              props.dataInput,
+              "New Plot",
+              standardColors[x.length % standardColors.length],
+            ),
+          ]);
+        }}
+      >
+        Add Plot
+      </ConfirmButton>
+    </>
+  );
+}
+
+type ExportOptionsProps = {
+  setOutputName: Setter<string>;
+  setOutputFormat: Setter<OutputFormat>;
+};
+
+function ExportOptions(props: ExportOptionsProps) {
+  return (
+    <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
+      <div class="flex flex-row gap-4 mb-4">
+        <h2 class="grow text-primary text-xl">Export Options</h2>
+        <TbFileExport class="grow-0 text-primary" size={24} />
+      </div>
+      <label class="mb-1 font-semibold" for="exportName">
+        File Name
+      </label>
+      <TextInput
+        id="exportName"
+        class="font-mono text-primary w-full"
+        value="plot"
+        out={props.setOutputName}
+      />
+      <div class="h-2" />
+      <label class="mb-1 font-semibold" for="exportFormat">
+        Format
+      </label>
+      <SelectInput
+        id="exportFormat"
+        class="font-mono text-primary"
+        out={props.setOutputFormat}
+        options={["SVG", "PNG"] as OutputFormat[]}
+      />
+    </div>
+  );
+}
+
+type GlobalPlotOptionsProps = {
+  setPlotOptions: Setter<UserPlotOptions>;
+};
+
+function GlobalPlotOptions(props: GlobalPlotOptionsProps) {
+  return (
+    <div class="bg-white rounded-xl shadow-lg p-4 flex flex-col">
+      <h2 class="grow text-primary text-xl">Plot Options</h2>
+      <div class="h-4" />
+      <label class="mb-1 font-semibold" for="plotTitle">
+        Title
+      </label>
+      <TextInput
+        id="plotTitle"
+        class="text-primary pb-1 outline-none w-full"
+        placeholder={"My Plot"}
+        value={""}
+        onChange={(x) => {
+          props.setPlotOptions((po) => {
+            return { ...po, title: x };
+          });
+        }}
+      />
+      <div class="h-2" />
+      <label class="mb-1 font-semibold">Dimensions</label>
+      <div class="flex flex-row items-center gap-2">
+        <TextInput
+          class="text-primary pb-1 outline-none grow"
+          value={"6"}
+          onChange={(x) => {
+            props.setPlotOptions((po) => {
+              return { ...po, width: parseInt(x, 0) };
+            });
+          }}
+        />
+        <ImCross class="text-accent" />
+        <TextInput
+          class="text-primary pb-1 outline-none grow"
+          value={"4"}
+          onChange={(x) => {
+            props.setPlotOptions((po) => {
+              return { ...po, height: parseInt(x, 0) };
+            });
+          }}
+        />
+      </div>
+      <div class="h-2" />
+      <SelectInput
+        class="text-primary pb-1 outline-none"
+        options={["Inches", "Pixels", "Centimeters"]}
+        onChange={(x) =>
+          //@ts-ignore
+          props.setPlotOptions((po) => {
+            return { ...po, dimUnit: x };
+          })
+        }
+      />
+      <div class="flex flex-row gap-8 mt-2">
+        <label class="grow font-semibold" for="showLegend">
+          Show Legend
+        </label>
+        <input
+          type="checkbox"
+          id="showLegend"
+          onChange={(_) =>
+            props.setPlotOptions((po) => {
+              return { ...po, showLegend: !po.showLegend };
+            })
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+type GlobalSubPlotOptionsProps = {
+  helpVisible: boolean;
+  paintingSubplot: number | null;
+  setPaintingSubplot: Setter<number | null>;
+  subplots: number[];
+  setSubplots: Setter<number[]>;
+  setSpOptions: Setter<UserPlotOptions[]>;
+  spOptIndex: number | null;
+  setSPOptIndex: Setter<number | null>;
+  setPlots: SetStoreFunction<UserPlot[]>;
+  setSPMargin: Setter<number>;
+};
+
+function GlobalSubPlotOptions(props: GlobalSubPlotOptionsProps) {
+  return (
+    <div class="relative bg-white rounded-xl p-4 shadow-lg">
+      <div
+        class={`absolute right-96 transition-opacity -translate-y-16 ${
+          props.helpVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <p class="absolute w-48 font-hand text-red-600 text-center">
+          Create subplots by adding them here. Then select a category (indicated
+          by a color) and "paint" each plot below to group them into the correct
+          subplot.
+        </p>
+        <div class="w-16 h-16 translate-x-48 -scale-x-100 rotate-45">
+          <img class="w-16 h-16 " src={TestSvg} />
+        </div>
+      </div>
+      <p class="mb-2 text-primary text-xl">Subplots</p>
+      <div class="flex flex-row flex-wrap gap-2">
+        <For each={props.subplots}>
+          {(sp) => (
+            <div
+              class={`rounded-full  w-8 h-8 hover:opacity-50 transition-opacity cursor-pointer ${
+                props.paintingSubplot == sp
+                  ? "border-2 border-green-500 opacity-50"
+                  : "opacity-20"
+              }`}
+              style={{ "background-color": standardColors[sp] }}
+              onClick={() => {
+                if (props.paintingSubplot == sp) {
+                  props.setPaintingSubplot(null);
+                } else {
+                  props.setPaintingSubplot(sp);
+                }
+              }}
+            />
+          )}
+        </For>
+        <div
+          class={`w-8 h-8 ${
+            props.paintingSubplot != null ? "rotate-[45deg]" : ""
+          } transition-transform`}
+          onClick={() => {
+            if (props.paintingSubplot == null) {
+              props.setSubplots((x) => [...x, x.length + 1]);
+              props.setSpOptions((x) => [...x, { ...defaultOps }]);
+              if (props.spOptIndex == null) {
+                props.setSPOptIndex(0);
+              }
+            } else {
+              props.setPaintingSubplot(null);
+            }
+          }}
+        >
+          <IoAddCircle
+            class="text-primary cursor-pointer opacity-50 hover:opacity-100 transition-opacity w-8 h-8 scale-[1.2]"
+            size={48}
+          />
+        </div>
+        <Show when={props.subplots.length > 0}>
+          <div
+            class="w-8 h-8"
+            onClick={() => {
+              const len = props.subplots.length;
+              props.setSubplots((x) => x.slice(0, x.length - 1));
+              props.setSpOptions((x) => x.slice(0, x.length - 1));
+              props.setSPOptIndex((x) => Math.min(x!!, len - 2));
+              props.setPlots(
+                (x) => (x.subplot != null && x.subplot >= len) ?? false,
+                produce((x) => {
+                  if (len == 1) {
+                    x.subplot = null;
+                  } else {
+                    x.subplot = len - 1;
+                  }
+                  return x;
+                }),
+              );
+              if (len - 1 == 0) {
+                props.setSPOptIndex(null);
+              }
+              props.setPaintingSubplot(null);
+            }}
+          >
+            <IoRemoveCircle
+              class="text-red-400 cursor-pointer opacity-50 hover:opacity-100 transition-opacity w-8 h-8 scale-[1.2]"
+              size={48}
+            />
+          </div>
+        </Show>
+      </div>
+      <Show when={props.subplots.length > 0}>
+        <div class="h-4" />
+        <p class="text-body text-lg">Margin</p>
+        <div class="h-2" />
+        <div class="px-4">
+          <SlideInput
+            from={0.0}
+            to={maxMargin(props.subplots.length)}
+            out={props.setSPMargin}
+            value={0.0}
+          />
+        </div>
+        <div class="h-8" />
+      </Show>
+    </div>
   );
 }

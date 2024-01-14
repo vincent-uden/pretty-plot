@@ -1,6 +1,6 @@
 import { createScriptLoader } from "@solid-primitives/script-loader";
-// @ts-ignore
-import * as Plotly from "plotly.js-basic-dist";
+//@ts-ignore
+import * as Plotly from "plotly.js-dist-min";
 
 import { createEffect, onMount } from "solid-js";
 

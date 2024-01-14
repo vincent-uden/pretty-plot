@@ -1,6 +1,5 @@
 import { ColorTranslator } from "colortranslator";
 import { Setter, createEffect, createSignal, onMount } from "solid-js";
-import TextInput from "./TextInput";
 
 type ColorPickerProps = {
   out: Setter<string>;

@@ -1,5 +1,4 @@
 import { Accessor, createSignal, Show } from "solid-js";
-import { UserPlot, UserPlotType } from "~/routes/index";
 
 import {
   VsGraph,
@@ -15,6 +14,7 @@ import { NoHydration } from "solid-js/web";
 import SelectInput from "./SelectInput";
 import TextInput from "./TextInput";
 import { ColorPicker } from "./ColorPicker";
+import { UserPlot, UserPlotType } from "~/plotting";
 
 type PlotSettingsProps = {
   plot: UserPlot;
