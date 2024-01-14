@@ -26,7 +26,7 @@ module.exports = {
         math: "Computer Modern",
         hand: "Milku",
       },
-    },
+    }
   },
-  plugins: [],
+  plugins: []
 };

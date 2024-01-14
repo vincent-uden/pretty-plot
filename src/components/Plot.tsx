@@ -1,5 +1,6 @@
 import { createScriptLoader } from "@solid-primitives/script-loader";
-import * as Plotly from "plotly.js-basic-dist";
+//@ts-ignore
+import * as Plotly from "plotly.js-dist-min";
 
 import { createEffect, onMount } from "solid-js";
 
@@ -67,7 +68,7 @@ export default function Plot(props: PlotProps) {
           title: "SVG_EXPORT",
           name: "SVG_EXPORT",
           icon: Plotly.Icons.camera,
-          click: function (gd) {
+          click: function (gd: any) {
             Plotly.downloadImage(gd, {
               width: props.width ?? 400,
               height: props.height ?? 400,
@@ -96,7 +97,7 @@ export default function Plot(props: PlotProps) {
             title: "SVG_EXPORT",
             name: "SVG_EXPORT",
             icon: Plotly.Icons.camera,
-            click: function (gd) {
+            click: function (gd: any) {
               Plotly.downloadImage(gd, {
                 width: props.width ?? 400,
                 height: props.height ?? 400,

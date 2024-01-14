@@ -1,5 +1,4 @@
-import { Accessor, createSignal, onMount, Show } from "solid-js";
-import { subplotColors, UserPlot, UserPlotType } from "~/routes";
+import { Accessor, createSignal, Show } from "solid-js";
 
 import {
   VsGraph,
@@ -11,10 +10,11 @@ import { AiFillPieChart } from "solid-icons/ai";
 import { FaSolidChevronDown } from "solid-icons/fa";
 import { IoTrashBinOutline } from "solid-icons/io";
 import { IconTypes } from "solid-icons";
-import { isServer, NoHydration } from "solid-js/web";
+import { NoHydration } from "solid-js/web";
 import SelectInput from "./SelectInput";
 import TextInput from "./TextInput";
-import { SketchPicker } from "solid-color";
+import { ColorPicker } from "./ColorPicker";
+import { UserPlot, UserPlotType } from "~/plotting";
 
 type PlotSettingsProps = {
   plot: UserPlot;
@@ -25,6 +25,19 @@ type PlotSettingsProps = {
   forceClose?: Accessor<boolean>;
   deletePlot?: (plotId: number) => void;
 };
+
+const subplotColors = [
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd",
+  "#8c564b",
+  "#e377c2",
+  "#7f7f7f",
+  "#bcbd22",
+  "#17becf",
+];
 
 function GraphIcon(type: UserPlotType): IconTypes {
   if (type == "bar") {
@@ -137,13 +150,17 @@ export default function PlotSettings({
             </label>
             <div />
             <div class="col-span-2 flex flex-row items-center justify-center">
+              {/* TODO: Find some other color picker that doesnt break
               <SketchPicker
                 color={plot.color}
                 onChange={(c) => {
                   updatePlot({ ...plot, color: c.hex }, "color");
                 }}
                 presetColors={subplotColors}
+                onSwatchHover={() => {}}
               />
+              */}
+              <ColorPicker out={(c: string) => { updatePlot({...plot, color: c}, "color")}} value={plot.color} />
             </div>
             <div class="col-span-2 h-2" />
             <div class="col-span-2 h-8" />

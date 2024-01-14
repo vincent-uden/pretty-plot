@@ -128,7 +128,7 @@ export function DraggableList<T>(props: DraggableListProps<T>) {
         {(item, i) => {
           return (
             <div
-              class={`cursor-grab select-none ${
+              class={`select-none ${
                 i() == grabbed() ? "opacity-0 h-0" : "opacity-100"
               } ${
                 (itemYs()[i()] ?? -1) < mousePos()[1] || grabbed() == null
