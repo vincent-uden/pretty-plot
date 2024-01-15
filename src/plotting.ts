@@ -84,7 +84,7 @@ export function csvToPlot(csvStr: string, name: string, color: string): UserPlot
     xKey: "",
     yKey: "",
     columns: [],
-    type: "scatter",
+    type: "line",
     id: new Date().getMilliseconds(),
     subplot: null,
   };

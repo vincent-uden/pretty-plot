@@ -20,6 +20,10 @@
   }
 }
 
+body {
+    background-color: var(--background);
+}
+
 .modebar-container {
     visibility: hidden;
 }

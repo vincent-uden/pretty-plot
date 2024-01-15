@@ -118,7 +118,7 @@ export default function Home() {
   return (
     <main class="mx-auto text-gray-700 p-4">
       <div class="flex flex-row items-center mb-4">
-        <h1 class="max-6-xs text-2xl font-heading uppercase font-extrabold grow">
+        <h1 class="max-6-xs text-2xl font-heading uppercase font-extrabold grow select-none">
           <span class="bg-gradient-to-r from-primary to-accent-active inline-block text-transparent bg-clip-text text-6xl">
             Plot
           </span>
