@@ -12,11 +12,9 @@ import TestSvg from "../test.svg";
 import ConfirmButton from "~/components/ConfirmButton";
 import { UserPlot, UserPlotOptions, csvToPlot, defaultOps, dimToPixels, generateLayout, userToPlotly } from "~/plotting";
 import { createStore } from "solid-js/store";
-import TextInput from "~/components/TextInput";
-import SelectInput from "~/components/SelectInput";
-import { SlideInput } from "~/components/SlideInput";
 import { DraggableList } from "~/components/DraggableList";
 import { clientOnly } from "@solidjs/start";
+import { TextInput, SelectInput, SlideInput } from "uden-ui";
 
 const Plot = clientOnly(() => import("../components/Plot"));
 const PlotSettings = clientOnly(
@@ -828,7 +826,7 @@ function GlobalPlotOptions(props: GlobalPlotOptionsProps) {
       <label class="mb-1 font-semibold">Dimensions</label>
       <div class="flex flex-row items-center gap-2">
         <TextInput
-          class="text-primary pb-1 outline-none grow"
+          class="text-primary pb-1 outline-none grow w-0"
           value={"6"}
           onChange={(x) => {
             props.setPlotOptions((po) => {
@@ -838,7 +836,7 @@ function GlobalPlotOptions(props: GlobalPlotOptionsProps) {
         />
         <ImCross class="text-accent" />
         <TextInput
-          class="text-primary pb-1 outline-none grow"
+          class="text-primary pb-1 outline-none grow w-0"
           value={"4"}
           onChange={(x) => {
             props.setPlotOptions((po) => {
@@ -990,6 +988,7 @@ function GlobalSubPlotOptions(props: GlobalSubPlotOptionsProps) {
             to={maxMargin(props.subplots.length)}
             out={props.setSPMargin}
             value={0.0}
+            trackClass="bg-gray-200"
           />
         </div>
         <div class="h-8" />
