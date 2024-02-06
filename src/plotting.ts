@@ -207,13 +207,13 @@ export function generateLayout(
   if (subplots.length == 0) {
     output["xaxis"] = {
       title: {
-        text: plotOptions.xLabel,
+        text: "$" + plotOptions.xLabel + "$",
       },
       showgrid: plotOptions.gridX,
     };
     output["yaxis"] = {
       title: {
-        text: plotOptions.yLabel,
+        text: "$" + plotOptions.yLabel + "$",
       },
       showgrid: plotOptions.gridY,
     };

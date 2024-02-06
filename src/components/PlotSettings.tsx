@@ -11,8 +11,7 @@ import { FaSolidChevronDown } from "solid-icons/fa";
 import { IoTrashBinOutline } from "solid-icons/io";
 import { IconTypes } from "solid-icons";
 import { NoHydration } from "solid-js/web";
-import SelectInput from "./SelectInput";
-import TextInput from "./TextInput";
+import { TextInput, SelectInput } from "uden-ui";
 import { ColorPicker } from "./ColorPicker";
 import { UserPlot, UserPlotType } from "~/plotting";
 
@@ -108,7 +107,7 @@ export default function PlotSettings({
               <label class="mb-1 font-semibold" for={`plotName-${plot.id}`}>
                 Type
               </label>
-              <TextInput id={`plotName-${plot.id}`} class="w-full" placeholder={plot.name} onChange={(x) => updatePlot({...plot, name: x}, "name")} />
+              <TextInput id={`plotName-${plot.id}`} class="w-full" value={plot.name} onChange={(x) => updatePlot({...plot, name: x}, "name")} />
             </div>
             <div class="col-span-2 h-4" />
             <label class="mb-1 font-semibold" for="exportName">
