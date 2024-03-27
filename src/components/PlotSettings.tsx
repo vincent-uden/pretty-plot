@@ -105,9 +105,21 @@ export default function PlotSettings({
             <div class="col-span-2 h-4" />
             <div class="col-span-2">
               <label class="mb-1 font-semibold" for={`plotName-${plot.id}`}>
-                Type
+                Name
               </label>
               <TextInput id={`plotName-${plot.id}`} class="w-full" value={plot.name} onChange={(x) => updatePlot({...plot, name: x}, "name")} />
+            </div>
+            <div class="col-span-2 h-4" />
+            <div class="col-span-2">
+              <label class="mb-1 font-semibold" for={`plotName-${plot.id}`}>
+                Visible
+              </label>
+            <SelectInput
+              class="text-primary pb-1 outline-none"
+              options={["Visible", "Hidden"]}
+              value={plot.visible ? "Visible" : "Hidden"}
+              onChange={(x) => updatePlot({ ...plot, visible: x == "Visible" }, "visible")}
+            />
             </div>
             <div class="col-span-2 h-4" />
             <label class="mb-1 font-semibold" for="exportName">

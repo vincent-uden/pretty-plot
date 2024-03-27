@@ -10,16 +10,22 @@ import { IoClose } from "solid-icons/io";
 
 import TestSvg from "../test.svg";
 import ConfirmButton from "~/components/ConfirmButton";
-import { UserPlot, UserPlotOptions, csvToPlot, defaultOps, dimToPixels, generateLayout, userToPlotly } from "~/plotting";
+import {
+  UserPlot,
+  UserPlotOptions,
+  csvToPlot,
+  defaultOps,
+  dimToPixels,
+  generateLayout,
+  userToPlotly,
+} from "~/plotting";
 import { createStore } from "solid-js/store";
 import { DraggableList } from "~/components/DraggableList";
 import { clientOnly } from "@solidjs/start";
 import { TextInput, SelectInput, SlideInput } from "uden-ui";
 
 const Plot = clientOnly(() => import("../components/Plot"));
-const PlotSettings = clientOnly(
-  () => import("../components/PlotSettings"),
-);
+const PlotSettings = clientOnly(() => import("../components/PlotSettings"));
 
 const standardColors = [
   "#1f77b4",
@@ -57,6 +63,7 @@ export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [helpVisible, setHelpVisible] = createSignal(false);
   const [dataInput, setDataInput] = createSignal("");
+  const [inputType, setInputType] = createSignal<InputType>("text");
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("SVG");
@@ -79,6 +86,7 @@ export default function Home() {
     e.preventDefault();
     const contents = await file?.text();
     if (contents != null) {
+      setInputType("file");
       setDataInput(contents);
     }
   }
@@ -143,7 +151,6 @@ export default function Home() {
         </div>
       </div>
       <div class="flex flex-row gap-8">
-
         {/* Left Panel */}
         <aside class="flex flex-col grow-0 basis-64 relative">
           <FileDropper
@@ -152,6 +159,8 @@ export default function Home() {
             dataInput={dataInput()}
             setDataInput={setDataInput}
             setPlots={setPlots}
+            inputType={inputType()}
+            setInputType={setInputType}
           />
           <div class="h-8" />
           <ExportOptions
@@ -713,38 +722,56 @@ export default function Home() {
   );
 }
 
+type InputType = "file" | "text";
+
 type FileDropperProps = {
   onDrop: (e: DragEvent) => Promise<void>;
   helpVisible: boolean;
   setPlots: Setter<UserPlot[]>;
   dataInput: string;
   setDataInput: Setter<string>;
+  inputType: InputType;
+  setInputType: Setter<InputType>;
 };
 
 function FileDropper(props: FileDropperProps) {
   return (
     <>
-      <textarea
-        id="csvDropZone"
-        onDrop={props.onDrop} // TODO: fileDropHandler
-        class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none"
-        placeholder="Paste your data here (csv, json)"
-        value={props.dataInput}
-        onChange={(e) => props.setDataInput(e.target.value)}
-      >
-        {""}
-      </textarea>
-      <div
-        class={`absolute left-48 translate-x-10 transition-opacity ${
-          props.helpVisible ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
-          Enter your data in this box by copy-paste or drag-and-drop an entire
-          file.
-        </p>
-        <img class="w-16 h-auto rotate-[-15deg] translate-y-4" src={TestSvg} />
-      </div>
+      <Show when={props.inputType == "text"}>
+        <textarea
+          id="csvDropZone"
+          onDrop={props.onDrop} // TODO: fileDropHandler
+          class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none min-w-64 h-24"
+          placeholder="Paste your data here (csv, json)"
+          value={props.dataInput}
+          onChange={(e) => props.setDataInput(e.target.value)}
+        >
+          {""}
+        </textarea>
+        <div
+          class={`absolute left-48 translate-x-10 transition-opacity ${
+            props.helpVisible ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
+            Enter your data in this box by copy-paste or drag-and-drop an entire
+            file.
+          </p>
+          <img
+            class="w-16 h-auto rotate-[-15deg] translate-y-4"
+            src={TestSvg}
+          />
+        </div>
+      </Show>
+      <Show when={props.inputType == "file"}>
+        <div class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none flex flex-row min-w-64 h-24 items-center">
+        <p class="grow text-primary opacity-50">File added</p>
+        <ImCross class="text-red-500 grow-0 hover:scale-125 transition-transform" onClick={() => {
+          props.setDataInput("");
+          props.setInputType("text");
+          }}/>
+        </div>
+      </Show>
       <div class="h-4" />
       <ConfirmButton
         onClick={() => {

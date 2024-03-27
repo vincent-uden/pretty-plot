@@ -1,8 +1,9 @@
 import { createScriptLoader } from "@solid-primitives/script-loader";
+import { diff } from "deep-object-diff";
 //@ts-ignore
 import * as Plotly from "plotly.js-dist-min";
 
-import { createEffect, onMount } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 
 export interface PlotProps {
   width?: number;
@@ -49,7 +50,7 @@ export let defaultLayout = {
 export default function Plot(props: PlotProps) {
   let plotId = "plot_div_" + Math.random();
 
-  const delay = 50;
+  const delay = 120;
   let updateTimer: any = null;
 
   createScriptLoader({
@@ -83,7 +84,9 @@ export default function Plot(props: PlotProps) {
 
   createEffect(() => {
     props.data;
+
     let layout = { ...defaultLayout, ...props.layout, width: props.width, height: props.height };
+    console.log(updateTimer);
     if (updateTimer != null) {
       clearTimeout(updateTimer);
     }
