@@ -14,6 +14,7 @@ export type UserPlot = {
   type: UserPlotType;
   id: number;
   subplot: number | null;
+  visible: boolean;
 };
 
 export type UserPlotOptions = {
@@ -87,6 +88,7 @@ export function csvToPlot(csvStr: string, name: string, color: string): UserPlot
     type: "line",
     id: new Date().getMilliseconds(),
     subplot: null,
+    visible: true,
   };
 
   const csv = parseCsv(csvStr);
@@ -122,6 +124,7 @@ export function userToPlotly(plot: UserPlot) {
     name: plot.name,
     xaxis: "x",
     yaxis: "y",
+    visible: plot.visible,
   };
   if (plot.type == "line") {
     trace.type = "scatter";
