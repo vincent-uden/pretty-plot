@@ -107,8 +107,11 @@ export function csvToPlot(csvStr: string, name: string, color: string): UserPlot
     output.columns.push(col);
   }
 
-  if (output.columns.length > 0) {
+  if (output.columns.length == 1) {
     output.yKey = output.columns[0].name;
+  } else if (output.columns.length >= 2) {
+    output.xKey = output.columns[0].name;
+    output.yKey = output.columns[1].name;
   }
 
   return output;

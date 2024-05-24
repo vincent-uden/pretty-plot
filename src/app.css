@@ -38,6 +38,11 @@ body {
     src: url("/Milku.otf");
 }
 
+@font-face {
+    font-family: "Noto Sans";
+    src: url("/NotoSans.ttf");
+}
+
 .custom-scroll {
     padding-left: 16px;
     padding-right: 8px;
