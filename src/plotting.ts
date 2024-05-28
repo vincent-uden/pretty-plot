@@ -47,7 +47,7 @@ export const defaultOps: UserPlotOptions = {
 
 export type CsvData = {
   headers: string[];
-  rows: Record<string, string|number|undefined>[];
+  rows: Record<string, string | number | undefined>[];
 };
 
 export function parseCsv(csvStr: string): CsvData {
@@ -78,7 +78,11 @@ export function parseCsv(csvStr: string): CsvData {
   return out;
 }
 
-export function csvToPlot(csvStr: string, name: string, color: string): UserPlot {
+export function csvToPlot(
+  csvStr: string,
+  name: string,
+  color: string,
+): UserPlot {
   let output: UserPlot = {
     name,
     color,
@@ -107,8 +111,11 @@ export function csvToPlot(csvStr: string, name: string, color: string): UserPlot
     output.columns.push(col);
   }
 
-  if (output.columns.length > 0) {
+  if (output.columns.length == 1) {
     output.yKey = output.columns[0].name;
+  } else if (output.columns.length >= 2) {
+    output.xKey = output.columns[0].name;
+    output.yKey = output.columns[1].name;
   }
 
   return output;
@@ -180,7 +187,10 @@ export function userToPlotly(plot: UserPlot) {
   return trace;
 }
 
-export function dimToPixels(x: number, unit: "Inches" | "Pixels" | "Centimeters") {
+export function dimToPixels(
+  x: number,
+  unit: "Inches" | "Pixels" | "Centimeters",
+) {
   if (unit == "Inches") {
     return x * 100;
   }

@@ -107,19 +107,26 @@ export default function PlotSettings({
               <label class="mb-1 font-semibold" for={`plotName-${plot.id}`}>
                 Name
               </label>
-              <TextInput id={`plotName-${plot.id}`} class="w-full" value={plot.name} onChange={(x) => updatePlot({...plot, name: x}, "name")} />
+              <TextInput
+                id={`plotName-${plot.id}`}
+                class="w-full"
+                value={plot.name}
+                onChange={(x) => updatePlot({ ...plot, name: x }, "name")}
+              />
             </div>
             <div class="col-span-2 h-4" />
             <div class="col-span-2">
               <label class="mb-1 font-semibold" for={`plotName-${plot.id}`}>
                 Visible
               </label>
-            <SelectInput
-              class="text-primary pb-1 outline-none"
-              options={["Visible", "Hidden"]}
-              value={plot.visible ? "Visible" : "Hidden"}
-              onChange={(x) => updatePlot({ ...plot, visible: x == "Visible" }, "visible")}
-            />
+              <SelectInput
+                class="text-primary pb-1 outline-none"
+                options={["Visible", "Hidden"]}
+                value={plot.visible ? "Visible" : "Hidden"}
+                onChange={(x) =>
+                  updatePlot({ ...plot, visible: x == "Visible" }, "visible")
+                }
+              />
             </div>
             <div class="col-span-2 h-4" />
             <label class="mb-1 font-semibold" for="exportName">
@@ -171,7 +178,12 @@ export default function PlotSettings({
                 onSwatchHover={() => {}}
               />
               */}
-              <ColorPicker out={(c: string) => { updatePlot({...plot, color: c}, "color")}} value={plot.color} />
+              <ColorPicker
+                out={(c: string) => {
+                  updatePlot({ ...plot, color: c }, "color");
+                }}
+                value={plot.color}
+              />
             </div>
             <div class="col-span-2 h-2" />
             <div class="col-span-2 h-8" />

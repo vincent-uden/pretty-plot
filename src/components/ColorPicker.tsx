@@ -45,16 +45,16 @@ export function ColorPicker(props: ColorPickerProps) {
   if (props.value != undefined) {
     const color = new ColorTranslator(props.value);
     const hsl = color.HSLObject;
-    setHue(hsl.H/360*width);
+    setHue((hsl.H / 360) * width);
     hsl.S /= 100;
     hsl.L /= 100;
     const V = hsl.L + hsl.S * Math.min(hsl.L, 1 - hsl.L);
     let Sv = 0;
     if (V !== 0) {
-      Sv = 2*(1 - hsl.L / V);
+      Sv = 2 * (1 - hsl.L / V);
     }
-    setX(Sv*width);
-    setY((1-V)*height);
+    setX(Sv * width);
+    setY((1 - V) * height);
   }
 
   onMount(() => {

@@ -21,107 +21,121 @@
 }
 
 body {
-    background-color: var(--background);
+  background-color: var(--background);
 }
 
 .modebar-container {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 @font-face {
-    font-family: "Computer Modern";
-    src: url("/cmunrm.ttf");
+  font-family: "Computer Modern";
+  src: url("/cmunrm.ttf");
 }
 
 @font-face {
-    font-family: "Milku";
-    src: url("/Milku.otf");
+  font-family: "Milku";
+  src: url("/Milku.otf");
+}
+
+@font-face {
+  font-family: "Noto Sans";
+  src: url("/NotoSans.ttf");
 }
 
 .custom-scroll {
-    padding-left: 16px;
-    padding-right: 8px;
-    scrollbar-gutter: stable;
+  padding-left: 16px;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
 }
 
 .custom-scroll::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-    background-color: #29479477;
-    border-radius: 999px;
+  background-color: #29479477;
+  border-radius: 999px;
 }
 
 /* -- Color Picker -- */
 div.sketch-picker {
-    box-shadow: none !important;
-    padding: 0 !important;
-    width: auto !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
 }
 
-div.sketch-picker div.flexbox-fix:nth-child(2) div:nth-child(1) div:nth-child(1) {
-    box-shadow: none !important;
-    height: 18px !important;
+div.sketch-picker
+  div.flexbox-fix:nth-child(2)
+  div:nth-child(1)
+  div:nth-child(1) {
+  box-shadow: none !important;
+  height: 18px !important;
 }
 
-div.sketch-picker div.flexbox-fix:nth-child(2) div:nth-child(1) div:nth-child(2) {
-    box-shadow: none !important;
-    height: 18px !important;
+div.sketch-picker
+  div.flexbox-fix:nth-child(2)
+  div:nth-child(1)
+  div:nth-child(2) {
+  box-shadow: none !important;
+  height: 18px !important;
 }
 
-div.sketch-picker div.flexbox-fix:nth-child(2) div:nth-child(2) div:nth-child(2) {
-    box-shadow: none !important;
-    height: 40px !important;
+div.sketch-picker
+  div.flexbox-fix:nth-child(2)
+  div:nth-child(2)
+  div:nth-child(2) {
+  box-shadow: none !important;
+  height: 40px !important;
 }
 
-div.sketch-picker div.flexbox-fix:nth-child(3) div:nth-child(n+2) {
-    display: none !important;
+div.sketch-picker div.flexbox-fix:nth-child(3) div:nth-child(n + 2) {
+  display: none !important;
 }
 
 div.sketch-picker div.flexbox-fix:nth-child(3) input {
-    width: 100% !important;
-    border: 2px solid rgb(229 231 235) !important;
-    border-radius: 4px;
-    outline: none !important;
-    box-shadow: none !important;
-    padding-left: 8px !important;
-    font-family: "Roboto" !important;
+  width: 100% !important;
+  border: 2px solid rgb(229 231 235) !important;
+  border-radius: 4px;
+  outline: none !important;
+  box-shadow: none !important;
+  padding-left: 8px !important;
+  font-family: "Roboto" !important;
 }
 
 div.sketch-picker div.flexbox-fix:nth-child(3) label {
-    transform: translate(0, -32px);
-    text-align: right !important;
-    padding-right: 12px;
-    opacity: 0.4;
-    height: 0;
-    font-family: "Roboto" !important;
+  transform: translate(0, -32px);
+  text-align: right !important;
+  padding-right: 12px;
+  opacity: 0.4;
+  height: 0;
+  font-family: "Roboto" !important;
 }
 
 div.sketch-picker div.flexbox-fix:nth-child(4) {
-    padding-left: 48px !important;
-    padding-right: 48px !important;
-    gap: 12px;
-    border-top: none !important;
-    margin-top: -10px !important;
+  padding-left: 48px !important;
+  padding-right: 48px !important;
+  gap: 12px;
+  border-top: none !important;
+  margin-top: -10px !important;
 }
 
-div.sketch-picker div.flexbox-fix:nth-child(4)>div {
-    margin: 0 !important;
+div.sketch-picker div.flexbox-fix:nth-child(4) > div {
+  margin: 0 !important;
 }
 
-div.sketch-picker div.flexbox-fix:nth-child(4)>div>div {
-    box-shadow: none !important;
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 100% !important;
+div.sketch-picker div.flexbox-fix:nth-child(4) > div > div {
+  box-shadow: none !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 100% !important;
 }
 
 div.sketch-picker input {
-    font-size: 16px !important;
+  font-size: 16px !important;
 }
 
 div.sketch-picker label {
-    font-size: 16px !important;
+  font-size: 16px !important;
 }
 /* ------------------ */

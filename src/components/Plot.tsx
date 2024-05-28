@@ -59,7 +59,12 @@ export default function Plot(props: PlotProps) {
   });
 
   onMount(() => {
-    let layout = { ...defaultLayout, ...props.layout, width: props.width, height: props.height };
+    let layout = {
+      ...defaultLayout,
+      ...props.layout,
+      width: props.width,
+      height: props.height,
+    };
     Plotly.newPlot(plotId, props.data, layout, {
       responsive: false,
       displaylogo: false,
@@ -85,8 +90,12 @@ export default function Plot(props: PlotProps) {
   createEffect(() => {
     props.data;
 
-    let layout = { ...defaultLayout, ...props.layout, width: props.width, height: props.height };
-    console.log(updateTimer);
+    let layout = {
+      ...defaultLayout,
+      ...props.layout,
+      width: props.width,
+      height: props.height,
+    };
     if (updateTimer != null) {
       clearTimeout(updateTimer);
     }

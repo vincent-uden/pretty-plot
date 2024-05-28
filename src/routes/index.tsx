@@ -1,4 +1,11 @@
-import { For, Setter, Show, createSignal } from "solid-js";
+import {
+  For,
+  Setter,
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+} from "solid-js";
 import { SetStoreFunction, produce } from "solid-js/store";
 
 import { TbFileExport } from "solid-icons/tb";
@@ -81,6 +88,18 @@ export default function Home() {
 
   const [dragging, setDragging] = createSignal<boolean>(false);
 
+  createEffect(() => {
+    let xLabel = document.getElementById("xLabel");
+    let yLabel = document.getElementById("yLabel");
+    if (xLabel != null) {
+      xLabel!!.innerHTML = plotOptions().xLabel;
+    }
+    if (yLabel != null) {
+      yLabel!!.innerHTML = plotOptions().yLabel;
+    }
+    plotOptions();
+  });
+
   async function loadDroppedFile(e: DragEvent) {
     const file = e.dataTransfer?.files[0];
     e.preventDefault();
@@ -118,6 +137,30 @@ export default function Home() {
           }
         });
       });
+    }
+  }
+
+  function onAddingPlot(plot: UserPlot) {
+    if (plotOptions().xLabel == "") {
+      if (plot.columns.length >= 2) {
+        setPlotOptions({
+          ...plotOptions(),
+          xLabel: plot.columns[0].name,
+        });
+      }
+    }
+    if (plotOptions().yLabel == "") {
+      if (plot.columns.length >= 2) {
+        setPlotOptions({
+          ...plotOptions(),
+          yLabel: plot.columns[1].name,
+        });
+      } else if (plot.columns.length >= 1) {
+        setPlotOptions({
+          ...plotOptions(),
+          yLabel: plot.columns[0].name,
+        });
+      }
     }
   }
 
@@ -161,6 +204,7 @@ export default function Home() {
             setPlots={setPlots}
             inputType={inputType()}
             setInputType={setInputType}
+            onAddingPlot={onAddingPlot}
           />
           <div class="h-8" />
           <ExportOptions
@@ -432,11 +476,13 @@ export default function Home() {
                   class="text-primary pb-1 outline-none w-full"
                   placeholder={"X Label"}
                   onChange={(x) => editPlotOption("xLabel", x)}
+                  id="xLabel"
                 />
                 <TextInput
                   class="text-primary pb-1 outline-none w-full"
                   placeholder={"Y Label"}
                   onChange={(x) => editPlotOption("yLabel", x)}
+                  id="yLabel"
                 />
               </div>
             )}
@@ -643,11 +689,13 @@ export default function Home() {
               class="text-primary pb-1 outline-none w-full"
               placeholder={"X Label"}
               onChange={(x) => editPlotOption("xLabel", x)}
+              value={plotOptions().xLabel}
             />
             <TextInput
               class="text-primary pb-1 outline-none w-full"
               placeholder={"Y Label"}
               onChange={(x) => editPlotOption("yLabel", x)}
+              value={plotOptions().yLabel}
             />
           </div>
         </div>
@@ -732,6 +780,7 @@ type FileDropperProps = {
   setDataInput: Setter<string>;
   inputType: InputType;
   setInputType: Setter<InputType>;
+  onAddingPlot: (plt: UserPlot) => void;
 };
 
 function FileDropper(props: FileDropperProps) {
@@ -765,24 +814,28 @@ function FileDropper(props: FileDropperProps) {
       </Show>
       <Show when={props.inputType == "file"}>
         <div class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none flex flex-row min-w-64 h-24 items-center">
-        <p class="grow text-primary opacity-50">File added</p>
-        <ImCross class="text-red-500 grow-0 hover:scale-125 transition-transform" onClick={() => {
-          props.setDataInput("");
-          props.setInputType("text");
-          }}/>
+          <p class="grow text-primary opacity-50">File added</p>
+          <ImCross
+            class="text-red-500 grow-0 hover:scale-125 transition-transform"
+            onClick={() => {
+              props.setDataInput("");
+              props.setInputType("text");
+            }}
+          />
         </div>
       </Show>
       <div class="h-4" />
       <ConfirmButton
         onClick={() => {
-          props.setPlots((x) => [
-            ...x,
-            csvToPlot(
+          props.setPlots((x) => {
+            let plt = csvToPlot(
               props.dataInput,
               "New Plot",
               standardColors[x.length % standardColors.length],
-            ),
-          ]);
+            );
+            props.onAddingPlot(plt);
+            return [...x, plt];
+          });
         }}
       >
         Add Plot
