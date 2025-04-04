@@ -30,6 +30,7 @@ import { createStore } from "solid-js/store";
 import { DraggableList } from "~/components/DraggableList";
 import { clientOnly } from "@solidjs/start";
 import { TextInput, SelectInput, SlideInput } from "uden-ui";
+import { createDropzone } from "@soorria/solid-dropzone";
 
 const Plot = clientOnly(() => import("../components/Plot"));
 const PlotSettings = clientOnly(() => import("../components/PlotSettings"));
@@ -100,10 +101,8 @@ export default function Home() {
     plotOptions();
   });
 
-  async function loadDroppedFile(e: DragEvent) {
-    const file = e.dataTransfer?.files[0];
-    e.preventDefault();
-    const contents = await file?.text();
+  async function loadDroppedFile(files: File[]) {
+    const contents = await files[0]?.text();
     if (contents != null) {
       setInputType("file");
       setDataInput(contents);
@@ -178,16 +177,14 @@ export default function Home() {
           onClick={() => setHelpVisible((x) => !x)}
         >
           <div
-            class={`absolute left-2 top-2 ${
-              helpVisible() ? "-translate-y-48" : "translate-y-0"
-            } transition-transform`}
+            class={`absolute left-2 top-2 ${helpVisible() ? "-translate-y-48" : "translate-y-0"
+              } transition-transform`}
           >
             <FaSolidQuestion size={32} />
           </div>
           <div
-            class={`absolute left-[8.5px] top-[8.5px] scale-125 ${
-              helpVisible() ? "translate-x-0" : "translate-x-48"
-            } transition-transform`}
+            class={`absolute left-[8.5px] top-[8.5px] scale-125 ${helpVisible() ? "translate-x-0" : "translate-x-48"
+              } transition-transform`}
           >
             <IoClose size={32} />
           </div>
@@ -250,9 +247,8 @@ export default function Home() {
               {(sp, i) => {
                 return (
                   <div
-                    class={`grow flex flex-row rounded-t-xl bg-white items-center px-4 cursor-pointer select-none ${
-                      i() == spOptIndex() ? "opacity-100" : "opacity-50"
-                    }`}
+                    class={`grow flex flex-row rounded-t-xl bg-white items-center px-4 cursor-pointer select-none ${i() == spOptIndex() ? "opacity-100" : "opacity-50"
+                      }`}
                     onClick={() => {
                       setSPOptIndex(i());
                     }}
@@ -274,9 +270,8 @@ export default function Home() {
           <For each={subplots()}>
             {(_, i) => (
               <div
-                class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${
-                  i() == spOptIndex() ? "" : "hidden"
-                }`}
+                class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${i() == spOptIndex() ? "" : "hidden"
+                  }`}
               >
                 <label class="mb-1 font-semibold">Grid</label>
                 <label class="mb-1 font-semibold">Limits</label>
@@ -488,9 +483,8 @@ export default function Home() {
             )}
           </For>
           <div
-            class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${
-              spOptIndex() == null ? "" : "hidden"
-            }`}
+            class={`bg-white rounded-b-xl shadow-lg p-4 grid grid-cols-2 gap-x-8 gap-y-2 ${spOptIndex() == null ? "" : "hidden"
+              }`}
           >
             <label class="mb-1 font-semibold">Grid</label>
             <label class="mb-1 font-semibold">Limits</label>
@@ -718,9 +712,8 @@ export default function Home() {
           <div class="h-4 w-full rounded-full bg-accent-active shadow-lg"></div>
           <div class="flex flex-col h-[70vh] overflow-y-hidden">
             <div
-              class={`absolute right-96 transition-opacity z-10 ${
-                helpVisible() ? "opacity-100" : "opacity-0"
-              }`}
+              class={`absolute right-96 transition-opacity z-10 ${helpVisible() ? "opacity-100" : "opacity-0"
+                }`}
             >
               <p class="absolute w-48 font-hand text-red-600 text-center">
                 Added plots show up here. Drag to change the ordering and click
@@ -773,7 +766,7 @@ export default function Home() {
 type InputType = "file" | "text";
 
 type FileDropperProps = {
-  onDrop: (e: DragEvent) => Promise<void>;
+  onDrop: (files: File[]) => Promise<void>;
   helpVisible: boolean;
   setPlots: Setter<UserPlot[]>;
   dataInput: string;
@@ -784,23 +777,19 @@ type FileDropperProps = {
 };
 
 function FileDropper(props: FileDropperProps) {
+  const dropzone = createDropzone({ onDrop: props.onDrop });
   return (
     <>
       <Show when={props.inputType == "text"}>
-        <textarea
-          id="csvDropZone"
-          onDrop={props.onDrop} // TODO: fileDropHandler
-          class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none min-w-64 h-24"
-          placeholder="Paste your data here (csv, json)"
-          value={props.dataInput}
-          onChange={(e) => props.setDataInput(e.target.value)}
-        >
-          {""}
-        </textarea>
+        <div class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none min-w-64 h-24 flex flex-col items-center justify-center" {...dropzone.getRootProps()}>
+          <input {...dropzone.getInputProps()} />
+          <p class="text-black/40 text-center">
+            {dropzone.isDragActive ? ("Drop the files here") : ("Drop a file here, or click to select one")}
+          </p>
+        </div>
         <div
-          class={`absolute left-48 translate-x-10 transition-opacity ${
-            props.helpVisible ? "opacity-100" : "opacity-0"
-          }`}
+          class={`absolute left-48 translate-x-10 transition-opacity ${props.helpVisible ? "opacity-100" : "opacity-0"
+            }`}
         >
           <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
             Enter your data in this box by copy-paste or drag-and-drop an entire
@@ -971,9 +960,8 @@ function GlobalSubPlotOptions(props: GlobalSubPlotOptionsProps) {
   return (
     <div class="relative bg-white rounded-xl p-4 shadow-lg">
       <div
-        class={`absolute right-96 transition-opacity -translate-y-16 ${
-          props.helpVisible ? "opacity-100" : "opacity-0"
-        }`}
+        class={`absolute right-96 transition-opacity -translate-y-16 ${props.helpVisible ? "opacity-100" : "opacity-0"
+          }`}
       >
         <p class="absolute w-48 font-hand text-red-600 text-center">
           Create subplots by adding them here. Then select a category (indicated
@@ -989,11 +977,10 @@ function GlobalSubPlotOptions(props: GlobalSubPlotOptionsProps) {
         <For each={props.subplots}>
           {(sp) => (
             <div
-              class={`rounded-full  w-8 h-8 hover:opacity-50 transition-opacity cursor-pointer ${
-                props.paintingSubplot == sp
-                  ? "border-2 border-green-500 opacity-50"
-                  : "opacity-20"
-              }`}
+              class={`rounded-full  w-8 h-8 hover:opacity-50 transition-opacity cursor-pointer ${props.paintingSubplot == sp
+                ? "border-2 border-green-500 opacity-50"
+                : "opacity-20"
+                }`}
               style={{ "background-color": standardColors[sp] }}
               onClick={() => {
                 if (props.paintingSubplot == sp) {
@@ -1006,9 +993,8 @@ function GlobalSubPlotOptions(props: GlobalSubPlotOptionsProps) {
           )}
         </For>
         <div
-          class={`w-8 h-8 ${
-            props.paintingSubplot != null ? "rotate-[45deg]" : ""
-          } transition-transform`}
+          class={`w-8 h-8 ${props.paintingSubplot != null ? "rotate-[45deg]" : ""
+            } transition-transform`}
           onClick={() => {
             if (props.paintingSubplot == null) {
               props.setSubplots((x) => [...x, x.length + 1]);

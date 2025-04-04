@@ -10,6 +10,7 @@
     "@solid-primitives/script-loader": "^2.0.2",
     "@solidjs/router": "^0.10.9",
     "@solidjs/start": "^0.4.9",
+    "@soorria/solid-dropzone": "^1.0.1",
     "autoprefixer": "^10.4.14",
     "colortranslator": "^4.1.0",
     "deep-object-diff": "^1.1.9",
