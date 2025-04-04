@@ -105,11 +105,15 @@ export default function H5Viewer() {
       const dataset = h5.get(path);
       setSelectedDataset(path);
       
-      // For large datasets, we might want to only show a slice
+      // Get the dataset shape information
+      const shape = dataset.shape;
+      console.log("Dataset shape:", shape);
+      
+      // Get the dataset content
       let content: any;
-      if (dataset.shape.reduce((a: number, b: number) => a * b, 1) > 1000) {
-        // For multi-dimensional arrays, just take the first few elements
-        const sliceParams = dataset.shape.map(() => [0, 5]);
+      if (shape.reduce((a: number, b: number) => a * b, 1) > 1000) {
+        // For large datasets, just take a slice
+        const sliceParams = shape.map(() => [0, 5]);
         content = dataset.slice(sliceParams);
       } else {
         content = dataset.value;
@@ -120,7 +124,102 @@ export default function H5Viewer() {
         content = Array.from(content as any);
       }
       
-      setDatasetContent(content);
+      console.log("Dataset content:", content);
+      
+      // Transform the content into UserPlot format
+      let userPlotData: any = null;
+      
+      // Check if the dataset has multiple columns based on its shape
+      if (Array.isArray(content) && content.length > 0) {
+        // If the shape has more than one dimension, it's likely a multi-column dataset
+        if (shape.length > 1) {
+          // For datasets with shape [rows, cols], the data is stored as a flat array
+          // where every nth entry belongs to the nth column
+          const numRows = shape[0];
+          const numColumns = shape[1];
+          
+          // Create columns from the flat array
+          const columns = [];
+          
+          for (let colIndex = 0; colIndex < numColumns; colIndex++) {
+            const columnData = [];
+            
+            // For each column, extract every nth entry starting at colIndex
+            for (let i = colIndex; i < content.length; i += numColumns) {
+              columnData.push(content[i]);
+            }
+            
+            columns.push({
+              name: `Column ${colIndex + 1}`,
+              data: columnData
+            });
+          }
+          
+          userPlotData = {
+            name: path.split('/').pop() || 'Dataset',
+            color: '#1f77b4', // Default color
+            xKey: 'index',
+            yKey: 'value',
+            columns: columns,
+            type: 'line', // Default type
+            id: Date.now(),
+            subplot: null,
+            visible: true
+          };
+        } else {
+          // For 1D datasets, check if it's a flat array of pairs
+          // This is a heuristic for datasets that might be stored as [x1,y1,x2,y2,...]
+          if (content.length % 2 === 0) {
+            // Split into x and y columns
+            const xValues = [];
+            const yValues = [];
+            
+            for (let i = 0; i < content.length; i += 2) {
+              xValues.push(content[i]);
+              yValues.push(content[i + 1]);
+            }
+            
+            userPlotData = {
+              name: path.split('/').pop() || 'Dataset',
+              color: '#1f77b4', // Default color
+              xKey: 'x',
+              yKey: 'y',
+              columns: [
+                {
+                  name: 'x',
+                  data: xValues
+                },
+                {
+                  name: 'y',
+                  data: yValues
+                }
+              ],
+              type: 'line', // Default type
+              id: Date.now(),
+              subplot: null,
+              visible: true
+            };
+          } else {
+            // If it's a 1D array (single column)
+            userPlotData = {
+              name: path.split('/').pop() || 'Dataset',
+              color: '#1f77b4', // Default color
+              xKey: 'index',
+              yKey: 'value',
+              columns: [{
+                name: 'Data',
+                data: content
+              }],
+              type: 'line', // Default type
+              id: Date.now(),
+              subplot: null,
+              visible: true
+            };
+          }
+        }
+      }
+      
+      setDatasetContent(userPlotData || content);
     } catch (err: any) {
       console.error("Error viewing dataset:", err);
       setError(`Error viewing dataset: ${err.message}`);
