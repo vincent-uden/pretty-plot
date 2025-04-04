@@ -1,16 +1,37 @@
 // src/components/H5Viewer.jsx
 import { createSignal, Show, onMount } from "solid-js";
 
+// Define types for h5wasm
+interface H5Module {
+  File: any;
+  Group: any;
+  Dataset: any;
+  Datatype: any;
+  DatasetRegion: any;
+  ready: Promise<{ FS: FileSystemType }>;
+  ACCESS_MODES: Record<string, string>;
+}
+
+interface FileSystemType {
+  writeFile: (path: string, data: Uint8Array) => void;
+  readFile: (path: string) => Uint8Array;
+}
+
+interface H5File {
+  get: (path: string) => any;
+  keys: () => string[];
+}
+
 export default function H5Viewer() {
-  const [h5wasmModule, setH5wasmModule] = createSignal(null);
-  const [FS, setFS] = createSignal(null);
-  const [file, setFile] = createSignal(null);
-  const [h5File, setH5File] = createSignal(null);
-  const [datasets, setDatasets] = createSignal([]);
-  const [selectedDataset, setSelectedDataset] = createSignal(null);
-  const [datasetContent, setDatasetContent] = createSignal(null);
+  const [h5wasmModule, setH5wasmModule] = createSignal<H5Module | null>(null);
+  const [FS, setFS] = createSignal<FileSystemType | null>(null);
+  const [file, setFile] = createSignal<string | null>(null);
+  const [h5File, setH5File] = createSignal<H5File | null>(null);
+  const [datasets, setDatasets] = createSignal<string[]>([]);
+  const [selectedDataset, setSelectedDataset] = createSignal<string | null>(null);
+  const [datasetContent, setDatasetContent] = createSignal<any>(null);
   const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal(null);
+  const [error, setError] = createSignal<string | null>(null);
 
   // Only load h5wasm on the client
   onMount(async () => {
@@ -24,15 +45,16 @@ export default function H5Viewer() {
       const { FS: fsModule } = await h5wasmImport.default.ready;
       setFS(fsModule);
       setLoading(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load h5wasm:", err);
       setError(err.message);
       setLoading(false);
     }
   });
 
-  async function handleFileUpload(event) {
-    const uploadedFile = event.target.files[0];
+  async function handleFileUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const uploadedFile = target.files?.[0];
     if (!uploadedFile || !FS()) return;
 
     try {
@@ -40,19 +62,21 @@ export default function H5Viewer() {
       const buffer = await uploadedFile.arrayBuffer();
       
       // Write to the virtual filesystem
-      FS().writeFile(uploadedFile.name, new Uint8Array(buffer));
+      FS()?.writeFile(uploadedFile.name, new Uint8Array(buffer));
       
       // Set the file signal
       setFile(uploadedFile.name);
       
-      // Open the HDF5 file - FIXED THIS LINE
+      // Open the HDF5 file
       const h5Module = h5wasmModule();
+      if (!h5Module) return;
+      
       const h5 = new h5Module.File(uploadedFile.name, "r");
       setH5File(h5);
       
       // Recursively collect all datasets
-      const allDatasets = [];
-      function collectDatasets(group, path) {
+      const allDatasets: string[] = [];
+      function collectDatasets(group: any, path: string) {
         for (const key of group.keys()) {
           const childPath = path ? `${path}/${key}` : key;
           const child = group.get(childPath);
@@ -67,13 +91,13 @@ export default function H5Viewer() {
       
       collectDatasets(h5, "");
       setDatasets(allDatasets);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error processing file:", err);
       setError(`Error processing file: ${err.message}`);
     }
   }
 
-  function viewDataset(path) {
+  function viewDataset(path: string) {
     try {
       const h5 = h5File();
       if (!h5) return;
@@ -82,8 +106,8 @@ export default function H5Viewer() {
       setSelectedDataset(path);
       
       // For large datasets, we might want to only show a slice
-      let content;
-      if (dataset.shape.reduce((a, b) => a * b, 1) > 1000) {
+      let content: any;
+      if (dataset.shape.reduce((a: number, b: number) => a * b, 1) > 1000) {
         // For multi-dimensional arrays, just take the first few elements
         const sliceParams = dataset.shape.map(() => [0, 5]);
         content = dataset.slice(sliceParams);
@@ -93,11 +117,11 @@ export default function H5Viewer() {
       
       // Convert TypedArrays to regular arrays for better display
       if (ArrayBuffer.isView(content)) {
-        content = Array.from(content);
+        content = Array.from(content as any);
       }
       
       setDatasetContent(content);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error viewing dataset:", err);
       setError(`Error viewing dataset: ${err.message}`);
     }
