@@ -121,6 +121,138 @@ export function csvToPlot(
   return output;
 }
 
+export interface H5Module {
+  File: any;
+  Group: any;
+  Dataset: any;
+  Datatype: any;
+  DatasetRegion: any;
+  ready: Promise<{ FS: FileSystemType }>;
+  ACCESS_MODES: Record<string, string>;
+}
+
+export interface FileSystemType {
+  writeFile: (path: string, data: Uint8Array) => void;
+  readFile: (path: string) => Uint8Array;
+}
+
+interface H5File {
+  get: (path: string) => any;
+  keys: () => string[];
+}
+
+export async function handleHd5f(
+  file: File,
+  FS: FileSystemType,
+  h5Module: H5Module,
+): Promise<UserPlot[]> {
+  try {
+    const buffer = await file.arrayBuffer();
+    FS.writeFile(file.name, new Uint8Array(buffer));
+    const h5File = new h5Module.File(file.name, "r");
+    // Recursively collect all datasets
+    const allDatasets: string[] = [];
+    function collectDatasets(group: any, path: string) {
+      for (const key of group.keys()) {
+        const childPath = path ? `${path}/${key}` : key;
+        const child = group.get(childPath);
+
+        if (child.constructor.name === "Dataset") {
+          allDatasets.push(childPath);
+        } else if (child.constructor.name === "Group") {
+          collectDatasets(child, childPath);
+        }
+      }
+    }
+    collectDatasets(h5File, "");
+    //@ts-expect-error
+    const plots: UserPlot[] = allDatasets
+      .map((name, i) =>
+        extractDataset(h5File, name, new Date().getMilliseconds() + i),
+      )
+      .filter((p) => p !== undefined);
+
+    return plots;
+  } catch (err: any) {
+    console.error("Error processing file:", err);
+  }
+  return [];
+}
+
+function extractDataset(
+  h5File: H5File,
+  datasetName: string,
+  plotId: number,
+): UserPlot | undefined {
+  try {
+    const dataset = h5File.get(datasetName);
+    const shape = dataset.shape;
+    console.log("Dataset shape:", shape);
+
+    let content: any;
+    content = dataset.value;
+    // Convert TypedArrays to regular arrays for better display
+    if (ArrayBuffer.isView(content)) {
+      content = Array.from(content as any);
+    }
+    console.log("Dataset content:", content);
+    let userPlotData: UserPlot | undefined = undefined;
+    if (Array.isArray(content) && content.length > 0) {
+      // If the shape has more than one dimension, it's likely a multi-column dataset
+      if (shape.length > 1) {
+        // For datasets with shape [rows, cols], the data is stored as a flat array
+        // where every nth entry belongs to the nth column
+        const numColumns = shape[1];
+        const columns = [];
+
+        for (let colIndex = 0; colIndex < numColumns; colIndex++) {
+          const columnData = [];
+          for (let i = colIndex; i < content.length; i += numColumns) {
+            columnData.push(content[i]);
+          }
+          columns.push({
+            name: `Column ${colIndex + 1}`,
+            data: columnData,
+          });
+        }
+
+        userPlotData = {
+          name: datasetName,
+          color: "#1f77b4", // Default color
+          xKey: "Column 1",
+          yKey: "Column 2",
+          columns: columns,
+          type: "line",
+          id: plotId,
+          subplot: null,
+          visible: true,
+        };
+      } else {
+        // If it's a 1D array (single column)
+        userPlotData = {
+          name: datasetName,
+          color: "#1f77b4", // Default color
+          xKey: "index",
+          yKey: "value",
+          columns: [
+            {
+              name: "Data",
+              data: content,
+            },
+          ],
+          type: "line", // Default type
+          id: plotId,
+          subplot: null,
+          visible: true,
+        };
+      }
+    }
+    return userPlotData;
+  } catch (err: any) {
+    console.error("Error viewing dataset:", err);
+  }
+}
+
 export function userToPlotly(plot: UserPlot) {
   let trace: any = {
     x: [],
