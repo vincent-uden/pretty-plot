@@ -31,11 +31,12 @@ import { DraggableList } from "~/components/DraggableList";
 import { clientOnly } from "@solidjs/start";
 import { TextInput, SelectInput, SlideInput } from "uden-ui";
 import { createDropzone } from "@soorria/solid-dropzone";
+import { FileDropper } from "~/components/FileDropper";
 
 const Plot = clientOnly(() => import("../components/Plot"));
 const PlotSettings = clientOnly(() => import("../components/PlotSettings"));
 
-const standardColors = [
+export const standardColors = [
   "#1f77b4",
   "#ff7f0e",
   "#2ca02c",
@@ -48,7 +49,7 @@ const standardColors = [
   "#17becf",
 ];
 
-const subplotColors = [
+export const subplotColors = [
   "#1f77b4",
   "#ff7f0e",
   "#2ca02c",
@@ -70,8 +71,6 @@ function maxMargin(n: number) {
 export default function Home() {
   const [plots, setPlots] = createStore<UserPlot[]>([]);
   const [helpVisible, setHelpVisible] = createSignal(false);
-  const [dataInput, setDataInput] = createSignal("");
-  const [inputType, setInputType] = createSignal<InputType>("text");
 
   const [outputName, setOutputName] = createSignal<string>("plot");
   const [outputFormat, setOutputFormat] = createSignal<OutputFormat>("SVG");
@@ -101,13 +100,6 @@ export default function Home() {
     plotOptions();
   });
 
-  async function loadDroppedFile(files: File[]) {
-    const contents = await files[0]?.text();
-    if (contents != null) {
-      setInputType("file");
-      setDataInput(contents);
-    }
-  }
 
   function updatePlot(p: UserPlot, field: keyof UserPlot) {
     setPlots(
@@ -194,13 +186,9 @@ export default function Home() {
         {/* Left Panel */}
         <aside class="flex flex-col grow-0 basis-64 relative">
           <FileDropper
-            onDrop={loadDroppedFile}
             helpVisible={helpVisible()}
-            dataInput={dataInput()}
-            setDataInput={setDataInput}
+            plots={plots}
             setPlots={setPlots}
-            inputType={inputType()}
-            setInputType={setInputType}
             onAddingPlot={onAddingPlot}
           />
           <div class="h-8" />
@@ -760,76 +748,6 @@ export default function Home() {
         </aside>
       </div>
     </main>
-  );
-}
-
-type InputType = "file" | "text";
-
-type FileDropperProps = {
-  onDrop: (files: File[]) => Promise<void>;
-  helpVisible: boolean;
-  setPlots: Setter<UserPlot[]>;
-  dataInput: string;
-  setDataInput: Setter<string>;
-  inputType: InputType;
-  setInputType: Setter<InputType>;
-  onAddingPlot: (plt: UserPlot) => void;
-};
-
-function FileDropper(props: FileDropperProps) {
-  const dropzone = createDropzone({ onDrop: props.onDrop });
-  return (
-    <>
-      <Show when={props.inputType == "text"}>
-        <div class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none min-w-64 h-24 flex flex-col items-center justify-center" {...dropzone.getRootProps()}>
-          <input {...dropzone.getInputProps()} />
-          <p class="text-black/40 text-center">
-            {dropzone.isDragActive ? ("Drop the files here") : ("Drop a file here, or click to select one")}
-          </p>
-        </div>
-        <div
-          class={`absolute left-48 translate-x-10 transition-opacity ${props.helpVisible ? "opacity-100" : "opacity-0"
-            }`}
-        >
-          <p class="absolute left-16 w-48 font-hand text-red-600 text-center">
-            Enter your data in this box by copy-paste or drag-and-drop an entire
-            file.
-          </p>
-          <img
-            class="w-16 h-auto rotate-[-15deg] translate-y-4"
-            src={TestSvg}
-          />
-        </div>
-      </Show>
-      <Show when={props.inputType == "file"}>
-        <div class="bg-white shadow-lg rounded-xl p-4 resize-none outline-none flex flex-row min-w-64 h-24 items-center">
-          <p class="grow text-primary opacity-50">File added</p>
-          <ImCross
-            class="text-red-500 grow-0 hover:scale-125 transition-transform"
-            onClick={() => {
-              props.setDataInput("");
-              props.setInputType("text");
-            }}
-          />
-        </div>
-      </Show>
-      <div class="h-4" />
-      <ConfirmButton
-        onClick={() => {
-          props.setPlots((x) => {
-            let plt = csvToPlot(
-              props.dataInput,
-              "New Plot",
-              standardColors[x.length % standardColors.length],
-            );
-            props.onAddingPlot(plt);
-            return [...x, plt];
-          });
-        }}
-      >
-        Add Plot
-      </ConfirmButton>
-    </>
   );
 }
 
