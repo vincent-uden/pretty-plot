@@ -43,7 +43,7 @@ export function FileDropper(props: FileDropperProps) {
 
   async function loadDroppedFile(files: File[]) {
     const file = files[0]!;
-    if (file.name.endsWith("csv")) {
+    if (file.name.toLowerCase().endsWith("csv")) {
       const contents = await files[0]?.text();
       if (contents != null) {
         setInputType("csv");
@@ -149,6 +149,10 @@ export function FileDropper(props: FileDropperProps) {
               return [...x, plt];
             });
           } else {
+            console.log(traces());
+            if (traces().length === 1) {
+              setSelectedTraces([0]);
+            }
             props.setPlots((x) => {
               return [...x, ...(traces().filter((_, i) => selectedTraces().includes(i)).map((p, i) => {
                 return { ...p, color: standardColors[(x.length + i) % standardColors.length], id: new Date().getMilliseconds() + i }
